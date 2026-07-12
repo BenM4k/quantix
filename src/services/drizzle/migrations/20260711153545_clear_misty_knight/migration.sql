@@ -1,0 +1,1 @@
+ALTER TABLE "company_profile" ADD COLUMN "company_type" text DEFAULT 'service' NOT NULL;
