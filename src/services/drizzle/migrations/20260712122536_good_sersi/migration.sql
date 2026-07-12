@@ -1,0 +1,22 @@
+ALTER TABLE "company_feature" ALTER COLUMN "organization_id" SET DATA TYPE text USING "organization_id"::text;--> statement-breakpoint
+ALTER TABLE "company_profile" ALTER COLUMN "organization_id" SET DATA TYPE text USING "organization_id"::text;--> statement-breakpoint
+ALTER TABLE "fiscal_period" ALTER COLUMN "organization_id" SET DATA TYPE text USING "organization_id"::text;--> statement-breakpoint
+ALTER TABLE "fiscal_year" ALTER COLUMN "organization_id" SET DATA TYPE text USING "organization_id"::text;--> statement-breakpoint
+ALTER TABLE "numbering_sequence" ALTER COLUMN "organization_id" SET DATA TYPE text USING "organization_id"::text;--> statement-breakpoint
+ALTER TABLE "tax_rate" ALTER COLUMN "organization_id" SET DATA TYPE text USING "organization_id"::text;--> statement-breakpoint
+ALTER TABLE "bank_account" ALTER COLUMN "organization_id" SET DATA TYPE text USING "organization_id"::text;--> statement-breakpoint
+ALTER TABLE "journal_entry" ALTER COLUMN "organization_id" SET DATA TYPE text USING "organization_id"::text;--> statement-breakpoint
+ALTER TABLE "journal_entry_line" ALTER COLUMN "organization_id" SET DATA TYPE text USING "organization_id"::text;--> statement-breakpoint
+ALTER TABLE "ledger_account" ALTER COLUMN "organization_id" SET DATA TYPE text USING "organization_id"::text;--> statement-breakpoint
+ALTER TABLE "product" ALTER COLUMN "organization_id" SET DATA TYPE text USING "organization_id"::text;--> statement-breakpoint
+ALTER TABLE "stock_adjustment" ALTER COLUMN "organization_id" SET DATA TYPE text USING "organization_id"::text;--> statement-breakpoint
+ALTER TABLE "stock_ledger_entry" ALTER COLUMN "organization_id" SET DATA TYPE text USING "organization_id"::text;--> statement-breakpoint
+ALTER TABLE "warehouse" ALTER COLUMN "organization_id" SET DATA TYPE text USING "organization_id"::text;--> statement-breakpoint
+ALTER TABLE "credit_note" ALTER COLUMN "organization_id" SET DATA TYPE text USING "organization_id"::text;--> statement-breakpoint
+ALTER TABLE "customer" ALTER COLUMN "organization_id" SET DATA TYPE text USING "organization_id"::text;--> statement-breakpoint
+ALTER TABLE "invoice" ALTER COLUMN "organization_id" SET DATA TYPE text USING "organization_id"::text;--> statement-breakpoint
+ALTER TABLE "invoice_line" ALTER COLUMN "organization_id" SET DATA TYPE text USING "organization_id"::text;--> statement-breakpoint
+ALTER TABLE "payment" ALTER COLUMN "organization_id" SET DATA TYPE text USING "organization_id"::text;--> statement-breakpoint
+ALTER TABLE "attachment" ALTER COLUMN "organization_id" SET DATA TYPE text USING "organization_id"::text;--> statement-breakpoint
+ALTER TABLE "department" ALTER COLUMN "organization_id" SET DATA TYPE text USING "organization_id"::text;--> statement-breakpoint
+ALTER TABLE "audit_log" ALTER COLUMN "organization_id" SET DATA TYPE text USING "organization_id"::text;

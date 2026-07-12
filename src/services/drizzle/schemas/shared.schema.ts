@@ -1,6 +1,7 @@
 import {
   index,
   numeric,
+  text,
   timestamp,
   uuid,
   type AnyPgColumnBuilder,
@@ -58,7 +59,7 @@ export const timestamps = () => ({
  * references() is intentionally NOT added here to avoid
  * circular imports with Better Auth.
  */
-export const organizationColumn = () => uuid("organization_id").notNull();
+export const organizationColumn = () => text("organization_id").notNull();
 
 /**
  * Utility for generating organization indexes.

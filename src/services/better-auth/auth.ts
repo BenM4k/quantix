@@ -12,6 +12,7 @@ import {
   platformAdmin,
 } from "./permissions";
 import * as schema from "@/services/drizzle/schemas"
+import { nextCookies } from "better-auth/next-js";
 
 const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy_key_for_build");
 
@@ -57,5 +58,6 @@ export const auth = betterAuth({
       organizationLimit: 1,
     }),
     admin(),
+    nextCookies()
   ],
 });
