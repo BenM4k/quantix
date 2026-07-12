@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Antigravity ERP",
+  title: "Quantix CD",
   description: "Modern multi-tenant ERP SaaS",
 };
 

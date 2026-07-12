@@ -26,7 +26,7 @@ export default function AuthLayout({
             E
           </div>
           <span className="font-extrabold tracking-tight text-base text-foreground">
-            Antigravity ERP
+            Quantix CD
           </span>
         </div>
         <div className="flex flex-col items-center justify-center h-full">
@@ -86,7 +86,7 @@ export default function AuthLayout({
 
         {/* Footer */}
         <div className="text-xs text-muted-foreground font-light z-10">
-          Powered by Next.js &amp; Better Auth. &copy; {new Date().getFullYear()} Antigravity ERP.
+          Powered by Next.js &amp; Better Auth. &copy; {new Date().getFullYear()} Quantix CD.
         </div>
         </div>
       </div>
@@ -110,7 +110,7 @@ export default function AuthLayout({
                 E
               </div>
               <span className="font-extrabold tracking-tight text-xs text-foreground">
-                Antigravity ERP
+                Quantix CD
               </span>
             </div>
             <ThemeToggle />
@@ -124,7 +124,7 @@ export default function AuthLayout({
 
         {/* Mobile footer */}
         <div className="lg:hidden text-center text-xs text-muted-foreground mt-8">
-          &copy; {new Date().getFullYear()} Antigravity ERP. All rights reserved.
+          &copy; {new Date().getFullYear()} Quantix CD. All rights reserved.
         </div>
       </div>
     </div>

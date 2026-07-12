@@ -11,7 +11,7 @@ import {
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const metadata: Metadata = {
-  title: "Antigravity ERP - Modern Multi-Tenant ERP SaaS",
+  title: "Quantix CD - Modern Multi-Tenant ERP SaaS",
   description:
     "Next-generation ERP SaaS offering strict tenant isolation, real-time ledgers, granular RBAC, and sleek modern layouts.",
 };
@@ -30,7 +30,7 @@ export default async function LandingPage() {
               E
             </div>
             <span className="font-extrabold tracking-tight text-xl text-foreground">
-              Antigravity ERP
+              Quantix CD
             </span>
           </div>
 
@@ -355,7 +355,7 @@ export default async function LandingPage() {
       <footer className="glass border-t border-[var(--glass-border)] py-10 z-10">
         <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <span className="font-extrabold tracking-tight text-foreground">Antigravity ERP</span>
+            <span className="font-extrabold tracking-tight text-foreground">Quantix CD</span>
             <span>&copy; {new Date().getFullYear()} All Rights Reserved.</span>
           </div>
           <div className="flex items-center gap-6">

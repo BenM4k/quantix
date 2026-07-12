@@ -47,7 +47,7 @@ export default async function DashboardPage() {
               E
             </div>
             <span className="font-extrabold tracking-tight text-base text-foreground">
-              Antigravity ERP
+              Quantix CD
             </span>
           </div>
 
