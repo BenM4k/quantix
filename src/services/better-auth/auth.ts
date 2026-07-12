@@ -11,6 +11,7 @@ import {
   admin as adminRole,
   platformAdmin,
 } from "./permissions";
+import * as schema from "@/services/drizzle/schemas"
 
 const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy_key_for_build");
 
@@ -19,6 +20,7 @@ export const auth = betterAuth({
   baseURL: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
   database: drizzleAdapter(db, {
     provider: "pg", // or "mysql", "sqlite"
+    schema: schema
   }),
   emailAndPassword: {
     enabled: true,
