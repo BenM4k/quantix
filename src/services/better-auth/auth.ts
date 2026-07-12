@@ -25,7 +25,7 @@ export const auth = betterAuth({
     requireEmailVerification: true,
     sendResetPassword: async ({ user, url, token }) => {
       await resend.emails.send({
-        from: "Quantix CD <onboarding@resend.dev>",
+        from: "Quantix CD <onboarding@bennymak.best>",
         to: user.email,
         subject: "Reset your password",
         text: `Reset your password by clicking here: ${url}`,
@@ -38,7 +38,7 @@ export const auth = betterAuth({
     sendVerificationEmail: async ({ user, url, token }) => {
       const customUrl = url.replace("/api/auth/verify-email", "/confirm-email");
       await resend.emails.send({
-        from: "Quantix CD <onboarding@resend.dev>",
+        from: "Quantix CD <onboarding@bennymak.best>",
         to: user.email,
         subject: "Verify your email address",
         text: `Verify your email address by clicking here: ${customUrl}`,
