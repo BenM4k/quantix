@@ -5,8 +5,19 @@ import { Err, Ok, type Result } from "@/lib/server-utils";
 
 export type AuthActionResult = Result<{ success: boolean }, { code: string; message: string }>;
 
+export type SignUpInput = {
+  email: string;
+  password: string;
+  name: string;
+};
+
+export type SignInInput = {
+  email: string;
+  password: string;
+};
+
 export async function signUpService(
-  input: any,
+  input: SignUpInput,
   requestHeaders: Headers,
 ): Promise<AuthActionResult> {
   try {
@@ -27,16 +38,17 @@ export async function signUpService(
     }
 
     return Ok({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as { code?: string; message?: string };
     return Err({
-      code: error.code || "SIGN_UP_ERROR",
-      message: error.message || "An error occurred during registration.",
+      code: err.code || "SIGN_UP_ERROR",
+      message: err.message || "An error occurred during registration.",
     });
   }
 }
 
 export async function signInService(
-  input: any,
+  input: SignInInput,
   requestHeaders: Headers,
 ): Promise<AuthActionResult> {
   try {
@@ -55,11 +67,25 @@ export async function signInService(
       });
     }
 
+    // Check if user has an existing company and set it as active
+    try {
+      const userOrgs = await auth.api.listOrganizations({ headers: requestHeaders });
+      if (userOrgs && userOrgs.length > 0) {
+        await auth.api.setActiveOrganization({
+          body: { organizationId: userOrgs[0].id },
+          headers: requestHeaders,
+        });
+      }
+    } catch {
+      // Ignore fallback if list/set fails
+    }
+
     return Ok({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as { code?: string; message?: string };
     return Err({
-      code: error.code || "SIGN_IN_ERROR",
-      message: error.message || "An error occurred during login.",
+      code: err.code || "SIGN_IN_ERROR",
+      message: err.message || "An error occurred during login.",
     });
   }
 }

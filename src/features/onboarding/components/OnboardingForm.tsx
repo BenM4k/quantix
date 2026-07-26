@@ -1,22 +1,33 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { onboardingSchema, type OnboardingInput } from "@/lib/validation/auth";
-import { onboardingAction } from "@/app/actions/auth.actions";
+import { useOnboarding } from "@/features/onboarding/hooks/use-onboarding";
 
 const COMPANY_TYPES = [
-  { value: "service" as const, label: "Service", description: "Consulting, software, professional services, agency.", emoji: "💼" },
-  { value: "retail" as const, label: "Retail / Trade", description: "E-commerce, wholesale, physical product sales.", emoji: "🛍️" },
-  { value: "manufacturing" as const, label: "Manufacturing", description: "Raw materials, production, bill of materials.", emoji: "🏭" },
+  {
+    value: "service" as const,
+    label: "Service",
+    description: "Consulting, software, professional services, agency.",
+    emoji: "💼",
+  },
+  {
+    value: "retail" as const,
+    label: "Retail / Trade",
+    description: "E-commerce, wholesale, physical product sales.",
+    emoji: "🛍️",
+  },
+  {
+    value: "manufacturing" as const,
+    label: "Manufacturing",
+    description: "Raw materials, production, bill of materials.",
+    emoji: "🏭",
+  },
 ];
 
 export default function OnboardingForm() {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const [serverError, setServerError] = useState<string | null>(null);
+  const { isPending, serverError, handleOnboarding } = useOnboarding();
 
   const {
     register,
@@ -25,21 +36,12 @@ export default function OnboardingForm() {
     formState: { errors },
   } = useForm<OnboardingInput>({
     resolver: zodResolver(onboardingSchema),
-    defaultValues: { companyName: "", companyType: "service", baseCurrency: "USD" },
+    defaultValues: {
+      companyName: "",
+      companyType: "service",
+      baseCurrency: "USD",
+    },
   });
-
-  const onSubmit = (data: OnboardingInput) => {
-    setServerError(null);
-    startTransition(async () => {
-      const res = await onboardingAction(data);
-      if (!res.ok) {
-        setServerError(res.error.message);
-      } else {
-        router.push("/dashboard");
-        router.refresh();
-      }
-    });
-  };
 
   return (
     <div className="w-full max-w-xl p-8 rounded-2xl glass-strong shadow-[var(--glass-shadow)]">
@@ -52,7 +54,7 @@ export default function OnboardingForm() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
+      <form onSubmit={handleSubmit(handleOnboarding)} noValidate className="space-y-6">
         {serverError && (
           <div
             role="alert"
@@ -64,7 +66,10 @@ export default function OnboardingForm() {
 
         {/* Company Name */}
         <div className="space-y-2">
-          <label htmlFor="companyName" className="text-sm font-medium text-foreground block">
+          <label
+            htmlFor="companyName"
+            className="text-sm font-medium text-foreground block"
+          >
             Company Name
           </label>
           <input
@@ -76,10 +81,16 @@ export default function OnboardingForm() {
             className="w-full px-4 py-3 rounded-xl glass-subtle border border-[var(--glass-border)] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all duration-200 disabled:opacity-50"
             placeholder="Acme Corporation"
             aria-invalid={!!errors.companyName}
-            aria-describedby={errors.companyName ? "companyName-error" : undefined}
+            aria-describedby={
+              errors.companyName ? "companyName-error" : undefined
+            }
           />
           {errors.companyName && (
-            <p id="companyName-error" role="alert" className="text-xs text-destructive">
+            <p
+              id="companyName-error"
+              role="alert"
+              className="text-xs text-destructive"
+            >
               {errors.companyName.message}
             </p>
           )}
@@ -128,9 +139,14 @@ export default function OnboardingForm() {
 
         {/* Base Currency */}
         <div className="space-y-2">
-          <label htmlFor="baseCurrency" className="text-sm font-medium text-foreground block">
+          <label
+            htmlFor="baseCurrency"
+            className="text-sm font-medium text-foreground block"
+          >
             Base Currency{" "}
-            <span className="text-muted-foreground font-normal">(ISO 3-letter code)</span>
+            <span className="text-muted-foreground font-normal">
+              (ISO 3-letter code)
+            </span>
           </label>
           <input
             id="baseCurrency"
@@ -141,10 +157,16 @@ export default function OnboardingForm() {
             className="w-full px-4 py-3 rounded-xl glass-subtle border border-[var(--glass-border)] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all duration-200 uppercase tracking-widest disabled:opacity-50"
             placeholder="USD"
             aria-invalid={!!errors.baseCurrency}
-            aria-describedby={errors.baseCurrency ? "baseCurrency-error" : undefined}
+            aria-describedby={
+              errors.baseCurrency ? "baseCurrency-error" : undefined
+            }
           />
           {errors.baseCurrency && (
-            <p id="baseCurrency-error" role="alert" className="text-xs text-destructive">
+            <p
+              id="baseCurrency-error"
+              role="alert"
+              className="text-xs text-destructive"
+            >
               {errors.baseCurrency.message}
             </p>
           )}

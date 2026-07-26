@@ -77,10 +77,11 @@ export async function signOutAction(): Promise<Result<{ success: boolean }, { co
       headers: requestHeaders,
     });
     return Ok({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as { code?: string; message?: string };
     return Err({
-      code: error.code || "SIGN_OUT_ERROR",
-      message: error.message || "An error occurred during logout.",
+      code: err.code || "SIGN_OUT_ERROR",
+      message: err.message || "An error occurred during logout.",
     });
   }
 }

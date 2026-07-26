@@ -9,16 +9,16 @@ This version fills in the gaps from v1: platform/identity, org structure, and fu
 
 ## Phase 0 — Foundation & Tooling
 
-- [ ] Init Next.js app (App Router) + TypeScript strict mode
-- [ ] Drizzle ORM + PostgreSQL (`services/drizzle/`)
-- [ ] Better Auth (`services/better-auth/`)
-- [ ] BullMQ + Redis (`services/bullmq/`)
-- [ ] Logger (`lib/logger/`) — `info` / `error` / `audit`
-- [ ] Zod as shared validation library
-- [ ] Shared `Ok<T>` / `Err<E>` result type
-- [ ] File storage service (S3-compatible) for documents/attachments
-- [ ] Email service (transactional — invoices, payslips, notifications)
-- [ ] CI pipeline: typecheck, lint, migrations check, seed data
+- [x] Init Next.js app (App Router) + TypeScript strict mode
+- [x] Drizzle ORM + PostgreSQL (`services/drizzle/`)
+- [x] Better Auth (`services/better-auth/`)
+- [-] BullMQ + Redis (`services/bullmq/`)
+- [-] Logger (`lib/logger/`) — `info` / `error` / `audit`
+- [x] Zod as shared validation library
+- [x] Shared `Ok<T>` / `Err<E>` result type
+- [-] File storage service (S3-compatible) for documents/attachments
+- [x] Email service (transactional — invoices, payslips, notifications)
+- [-] CI pipeline: typecheck, lint, migrations check, seed data
 
 ---
 

@@ -77,3 +77,11 @@ export const invitation = pgTable("invitation", {
   expiresAt: timestamp("expires_at", { withTimezone: true, mode: "date" }).notNull(),
   inviterId: text("inviter_id").notNull().references(() => user.id),
 });
+
+export type User = typeof user.$inferSelect;
+export type Session = typeof session.$inferSelect;
+export type Account = typeof account.$inferSelect;
+export type Verification = typeof verification.$inferSelect;
+export type Organization = typeof organization.$inferSelect;
+export type Member = typeof member.$inferSelect;
+export type Invitation = typeof invitation.$inferSelect;

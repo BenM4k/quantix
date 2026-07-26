@@ -40,7 +40,7 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-screen relative overflow-hidden flex flex-col">
       {/* Header */}
-      <header className="glass border-b border-[var(--glass-border)] sticky top-0 z-50">
+      <header className="glass border-b border-(--glass-border) sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center font-black text-base text-primary-foreground glow-sm">
@@ -53,8 +53,12 @@ export default async function DashboardPage() {
 
           <div className="flex items-center gap-3">
             <div className="flex flex-col items-end text-sm">
-              <span className="font-semibold text-foreground">{user?.name}</span>
-              <span className="text-xs text-muted-foreground capitalize">{role}</span>
+              <span className="font-semibold text-foreground">
+                {user?.name}
+              </span>
+              <span className="text-xs text-muted-foreground capitalize">
+                {role}
+              </span>
             </div>
             <ThemeToggle />
             <LogoutButton />
@@ -65,7 +69,9 @@ export default async function DashboardPage() {
       {/* Main Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-12 flex flex-col gap-8 z-10">
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Dashboard</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
+            Dashboard
+          </h1>
           <p className="text-muted-foreground font-light">
             Welcome to your company workspace.
           </p>
@@ -74,18 +80,20 @@ export default async function DashboardPage() {
         {/* Info Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Org Card */}
-          <div className="p-6 rounded-2xl glass hover:glow-sm hover:border-primary/30 border border-[var(--glass-border)] transition-all duration-300 flex flex-col gap-4">
+          <div className="p-6 rounded-2xl glass hover:glow-sm hover:border-primary/30 border border-(--glass-border) transition-all duration-300 flex flex-col gap-4">
             <span className="text-xs font-semibold text-primary uppercase tracking-wider">
               Organization
             </span>
             <div className="flex flex-col gap-1">
               <h2 className="text-xl font-bold text-foreground">{org?.name}</h2>
-              <span className="text-xs text-muted-foreground">ID: {org?.id}</span>
+              <span className="text-xs text-muted-foreground">
+                ID: {org?.id}
+              </span>
             </div>
           </div>
 
           {/* Profile Card */}
-          <div className="p-6 rounded-2xl glass hover:glow-amber hover:border-accent/30 border border-[var(--glass-border)] transition-all duration-300 flex flex-col gap-4">
+          <div className="p-6 rounded-2xl glass hover:glow-amber hover:border-accent/30 border border-(--glass-border) transition-all duration-300 flex flex-col gap-4">
             <span className="text-xs font-semibold text-accent uppercase tracking-wider">
               Company Model
             </span>
@@ -100,7 +108,7 @@ export default async function DashboardPage() {
           </div>
 
           {/* Currency Card */}
-          <div className="p-6 rounded-2xl glass hover:glow-sm hover:border-primary/30 border border-[var(--glass-border)] transition-all duration-300 flex flex-col gap-4">
+          <div className="p-6 rounded-2xl glass hover:glow-sm hover:border-primary/30 border border-(--glass-border) transition-all duration-300 flex flex-col gap-4">
             <span className="text-xs font-semibold text-primary uppercase tracking-wider">
               Localization
             </span>
@@ -116,10 +124,12 @@ export default async function DashboardPage() {
         </div>
 
         {/* Getting Started Section */}
-        <div className="p-8 rounded-2xl glass-strong border border-[var(--glass-border)] flex flex-col gap-4 glow-amber">
+        <div className="p-8 rounded-2xl glass-strong border border-(--glass-border) flex flex-col gap-4 glow-amber">
           <h3 className="text-lg font-bold text-foreground">Getting Started</h3>
           <p className="text-sm leading-relaxed text-muted-foreground max-w-2xl font-light">
-            Your SaaS tenant is fully initialized with organization-scoped isolation. The database schema has been prepared, and the backend is type-safe.
+            Your SaaS tenant is fully initialized with organization-scoped
+            isolation. The database schema has been prepared, and the backend is
+            type-safe.
           </p>
         </div>
       </main>

@@ -35,6 +35,8 @@ export const relations = defineRelations(schema, (r) => ({
     warehouses: r.many.warehouse(),
     products: r.many.product(),
     customers: r.many.customer(),
+    quotes: r.many.quote(),
+    orders: r.many.salesOrder(),
     invoices: r.many.invoice(),
     auditLogs: r.many.auditLog(),
   },
@@ -145,6 +147,8 @@ export const relations = defineRelations(schema, (r) => ({
     }),
     stockEntries: r.many.stockLedgerEntry(),
     invoiceLines: r.many.invoiceLine(),
+    quoteLines: r.many.quoteLine(),
+    orderLines: r.many.salesOrderLine(),
   },
 
   warehouse: {
@@ -167,6 +171,17 @@ export const relations = defineRelations(schema, (r) => ({
     }),
   },
 
+  productStockSummary: {
+    product: r.one.product({
+      from: r.productStockSummary.productId,
+      to: r.product.id,
+    }),
+    warehouse: r.one.warehouse({
+      from: r.productStockSummary.warehouseId,
+      to: r.warehouse.id,
+    }),
+  },
+
   stockAdjustment: {
     warehouse: r.one.warehouse({
       from: r.stockAdjustment.warehouseId,
@@ -175,16 +190,73 @@ export const relations = defineRelations(schema, (r) => ({
   },
 
   /* --------------------------------------------------------
-   * Sales
+   * Sales — Customer
    * -------------------------------------------------------- */
   customer: {
     organization: r.one.organization({
       from: r.customer.organizationId,
       to: r.organization.id,
     }),
+    quotes: r.many.quote(),
+    orders: r.many.salesOrder(),
     invoices: r.many.invoice(),
   },
 
+  /* --------------------------------------------------------
+   * Sales — Quote
+   * -------------------------------------------------------- */
+  quote: {
+    organization: r.one.organization({
+      from: r.quote.organizationId,
+      to: r.organization.id,
+    }),
+    customer: r.one.customer({
+      from: r.quote.customerId,
+      to: r.customer.id,
+    }),
+    lines: r.many.quoteLine(),
+  },
+
+  quoteLine: {
+    quote: r.one.quote({
+      from: r.quoteLine.quoteId,
+      to: r.quote.id,
+    }),
+    product: r.one.product({
+      from: r.quoteLine.productId,
+      to: r.product.id,
+    }),
+  },
+
+  /* --------------------------------------------------------
+   * Sales — Sales Order
+   * -------------------------------------------------------- */
+  salesOrder: {
+    organization: r.one.organization({
+      from: r.salesOrder.organizationId,
+      to: r.organization.id,
+    }),
+    customer: r.one.customer({
+      from: r.salesOrder.customerId,
+      to: r.customer.id,
+    }),
+    lines: r.many.salesOrderLine(),
+  },
+
+  salesOrderLine: {
+    order: r.one.salesOrder({
+      from: r.salesOrderLine.orderId,
+      to: r.salesOrder.id,
+    }),
+    product: r.one.product({
+      from: r.salesOrderLine.productId,
+      to: r.product.id,
+    }),
+  },
+
+  /* --------------------------------------------------------
+   * Sales — Invoice
+   * -------------------------------------------------------- */
   invoice: {
     organization: r.one.organization({
       from: r.invoice.organizationId,

@@ -10,84 +10,81 @@ export default function AuthLayout({
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-12 relative overflow-hidden">
       {/* Left Section: Visual / Marketing Presentation */}
-        {/* Subtle inner ambient glow */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              "radial-gradient(ellipse at 20% 40%, var(--glow-orange) 0%, transparent 60%)",
-            opacity: 0.15,
-          }}
-        />
+      {/* Subtle inner ambient glow */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse at 20% 40%, var(--glow-orange) 0%, transparent 60%)",
+          opacity: 0.15,
+        }}
+      />
       <div className="hidden lg:flex lg:col-span-7 relative flex-col justify-between p-12 border-r border-[var(--glass-border)] overflow-hidden">
         {/* Top Branding */}
         <div className="flex items-center gap-3 z-10">
           <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center font-black text-base text-primary-foreground glow-sm">
-            E
+            Q
           </div>
           <span className="font-extrabold tracking-tight text-base text-foreground">
             Quantix CD
           </span>
         </div>
         <div className="flex flex-col items-center justify-center h-full">
+          {/* Value Proposition */}
+          <div className="flex flex-col gap-8 z-10 max-w-sm">
+            <div className="flex flex-col gap-3">
+              <h2 className="text-3xl font-extrabold tracking-tight leading-tight text-foreground">
+                Enterprise Control,
+                <br />
+                Simplified
+              </h2>
+              <p className="text-sm leading-relaxed text-muted-foreground font-light">
+                Secure multi-tenant isolation, automated ledger audits, and
+                real-time operations overview at your fingertips.
+              </p>
+            </div>
 
-
-
-        {/* Value Proposition */}
-        <div className="flex flex-col gap-8 z-10 max-w-sm">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-subtle text-muted-foreground text-xs font-semibold w-fit">
-            <Sparkles className="w-3.5 h-3.5 text-primary" />
-            <span>Fully Compliant SaaS Tenant</span>
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <h2 className="text-3xl font-extrabold tracking-tight leading-tight text-foreground">
-              Enterprise Control,
-              <br />
-              <span className="text-primary">Simplified</span>
-            </h2>
-            <p className="text-sm leading-relaxed text-muted-foreground font-light">
-              Secure multi-tenant isolation, automated ledger audits, and
-              real-time operations overview at your fingertips.
-            </p>
-          </div>
-
-          {/* Value points */}
-          <div className="flex flex-col gap-4">
-            {[
-              {
-                icon: <Shield className="w-4 h-4 text-primary" />,
-                title: "Strict Context Guards",
-                desc: "Zero shared-data leakage guarantees.",
-              },
-              {
-                icon: <BarChart3 className="w-4 h-4 text-accent" />,
-                title: "Multi-Currency Ledgers",
-                desc: "Dynamic company types configured on-demand.",
-              },
-              {
-                icon: <KeyRound className="w-4 h-4 text-primary" />,
-                title: "Dynamic Auth & Roles",
-                desc: "RBAC policies enforcing security across APIs.",
-              },
-            ].map(({ icon, title, desc }) => (
-              <div key={title} className="flex gap-3">
-                <div className="w-8 h-8 rounded-lg glass-subtle border border-[var(--glass-border)] flex items-center justify-center shrink-0">
-                  {icon}
+            {/* Value points */}
+            <div className="flex flex-col gap-4">
+              {[
+                {
+                  icon: <Shield className="w-4 h-4 text-primary" />,
+                  title: "Strict Context Guards",
+                  desc: "Zero shared-data leakage guarantees.",
+                },
+                {
+                  icon: <BarChart3 className="w-4 h-4 text-accent" />,
+                  title: "Multi-Currency Ledgers",
+                  desc: "Dynamic company types configured on-demand.",
+                },
+                {
+                  icon: <KeyRound className="w-4 h-4 text-primary" />,
+                  title: "Dynamic Auth & Roles",
+                  desc: "RBAC policies enforcing security across APIs.",
+                },
+              ].map(({ icon, title, desc }) => (
+                <div key={title} className="flex gap-3">
+                  <div className="w-8 h-8 rounded-lg glass-subtle border border-[var(--glass-border)] flex items-center justify-center shrink-0">
+                    {icon}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-foreground">
+                      {title}
+                    </span>
+                    <span className="text-xs text-muted-foreground font-light">
+                      {desc}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-xs font-bold text-foreground">{title}</span>
-                  <span className="text-xs text-muted-foreground font-light">{desc}</span>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* Footer */}
-        <div className="text-xs text-muted-foreground font-light z-10">
-          Powered by Next.js &amp; Better Auth. &copy; {new Date().getFullYear()} Quantix CD.
-        </div>
+          {/* Footer */}
+          <div className="text-xs text-muted-foreground font-light z-10">
+            Powered by Next.js &amp; Better Auth. &copy;{" "}
+            {new Date().getFullYear()} Quantix CD.
+          </div>
         </div>
       </div>
 

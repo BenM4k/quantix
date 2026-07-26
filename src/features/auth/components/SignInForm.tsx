@@ -1,14 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signInSchema, type SignInInput } from "@/lib/validation/auth";
-import { signInAction } from "@/app/actions/auth.actions";
+import { useSignIn } from "@/features/auth/hooks/use-sign-in";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
-
 
 /** Inline SVG: Google */
 function GoogleIcon() {
@@ -37,7 +35,13 @@ function GoogleIcon() {
 /** Inline SVG: Apple */
 function AppleIcon() {
   return (
-    <svg width="16" height="18" viewBox="0 0 814 1000" aria-hidden fill="currentColor">
+    <svg
+      width="16"
+      height="18"
+      viewBox="0 0 814 1000"
+      aria-hidden
+      fill="currentColor"
+    >
       <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-42.3-147.8-102.3C44.9 673.7 0 562.7 0 457.2C0 243.3 133.4 129.9 264.4 129.9c70.3 0 128.9 46.2 173.5 46.2 42.8 0 109.1-48.9 188.3-48.9 30.4 0 110.8 2.6 163.7 100.7zm-234.8-181.7c28.3-34.2 49.2-81.7 49.2-129.2 0-6.5-.6-13.1-1.9-18.3C549.3 7.8 450 51.3 380.6 127.3c-25.8 28.3-51.8 74.4-51.8 120.2 0 7.2 1.3 14.4 1.9 16.7 2.6.3 7.2.9 11.8.9 44.1 0 134.4-48.4 205.7-105.9z" />
     </svg>
   );
@@ -46,12 +50,11 @@ function AppleIcon() {
 const inputClass =
   "w-full px-0 py-2.5 bg-transparent border-0 border-b border-[var(--glass-border)] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary transition-colors duration-200 text-sm disabled:opacity-40";
 
-const labelClass = "text-xs font-medium text-muted-foreground uppercase tracking-wider";
+const labelClass =
+  "text-xs font-medium text-muted-foreground uppercase tracking-wider";
 
 export default function SignInForm() {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const [serverError, setServerError] = useState<string | null>(null);
+  const { isPending, serverError, handleSignIn } = useSignIn();
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -63,25 +66,16 @@ export default function SignInForm() {
     defaultValues: { email: "", password: "" },
   });
 
-  const onSubmit = (data: SignInInput) => {
-    setServerError(null);
-    startTransition(async () => {
-      const res = await signInAction(data);
-      if (!res.ok) {
-        setServerError(res.error.message);
-      } else {
-        router.push("/dashboard");
-        router.refresh();
-      }
-    });
-  };
-
   return (
     <div className="w-full max-w-sm">
       {/* Heading */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Welcome back</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Sign in to your ERP workspace</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          Welcome back
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Sign in to your ERP workspace
+        </p>
       </div>
 
       {/* OAuth buttons */}
@@ -108,12 +102,14 @@ export default function SignInForm() {
       {/* Divider */}
       <div className="flex items-center gap-3 mb-8">
         <div className="flex-1 h-px bg-[var(--glass-border)]" />
-        <span className="text-xs text-muted-foreground/60 uppercase tracking-wider">or</span>
+        <span className="text-xs text-muted-foreground/60 uppercase tracking-wider">
+          or
+        </span>
         <div className="flex-1 h-px bg-[var(--glass-border)]" />
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
+      <form onSubmit={handleSubmit(handleSignIn)} noValidate className="space-y-6">
         {serverError && (
           <p role="alert" className="text-xs text-destructive">
             {serverError}
@@ -121,7 +117,9 @@ export default function SignInForm() {
         )}
 
         <div className="space-y-1">
-          <label htmlFor="email" className={labelClass}>Email</label>
+          <label htmlFor="email" className={labelClass}>
+            Email
+          </label>
           <input
             id="email"
             type="email"
@@ -134,7 +132,11 @@ export default function SignInForm() {
             aria-describedby={errors.email ? "email-error" : undefined}
           />
           {errors.email && (
-            <p id="email-error" role="alert" className="text-xs text-destructive pt-1">
+            <p
+              id="email-error"
+              role="alert"
+              className="text-xs text-destructive pt-1"
+            >
               {errors.email.message}
             </p>
           )}
@@ -143,7 +145,9 @@ export default function SignInForm() {
         <div className="space-y-1">
           {/* Label row with forgot password link */}
           <div className="flex items-center justify-between">
-            <label htmlFor="password" className={labelClass}>Password</label>
+            <label htmlFor="password" className={labelClass}>
+              Password
+            </label>
             <Link
               href="/forgot-password"
               className="text-xs text-muted-foreground hover:text-primary transition-colors duration-200"
@@ -169,11 +173,19 @@ export default function SignInForm() {
               className="absolute right-0 text-muted-foreground hover:text-foreground focus:outline-none p-1 cursor-pointer"
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
-              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {showPassword ? (
+                <EyeOff className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
             </button>
           </div>
           {errors.password && (
-            <p id="password-error" role="alert" className="text-xs text-destructive pt-1">
+            <p
+              id="password-error"
+              role="alert"
+              className="text-xs text-destructive pt-1"
+            >
               {errors.password.message}
             </p>
           )}
@@ -197,7 +209,10 @@ export default function SignInForm() {
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{" "}
-        <Link href="/sign-up" className="font-medium text-primary hover:opacity-80 transition-opacity">
+        <Link
+          href="/sign-up"
+          className="font-medium text-primary hover:opacity-80 transition-opacity"
+        >
           Sign Up
         </Link>
       </p>

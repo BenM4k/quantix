@@ -18,7 +18,7 @@
  * `cause`), so keeping this server-only is intentional, not incidental.
  */
 
-import "server-only";
+// import "server-only";
 
 // ---------------------------------------------------------------------------
 // Core type

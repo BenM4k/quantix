@@ -8,10 +8,18 @@ export const metadata: Metadata = {
   description: "Create your tenant account and get started.",
 };
 
-export default async function SignUpPage() {
+export default async function SignUpPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ callback?: string }>;
+}) {
+  const params = await searchParams;
   const session = await getSession();
 
   if (session) {
+    if (params.callback) {
+      redirect(params.callback);
+    }
     if (!session.session.activeOrganizationId) {
       redirect("/onboarding");
     } else {

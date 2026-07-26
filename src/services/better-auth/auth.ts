@@ -56,6 +56,24 @@ export const auth = betterAuth({
       creatorRole: "owner",
       allowUserToCreateOrganization: true,
       organizationLimit: 1,
+      sendInvitationEmail: async (data) => {
+        const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/accept-invitation?invitationId=${data.id}`;
+        const { renderInvitationEmailHtml } = await import("@/services/resend/invitation-email-template");
+        const html = renderInvitationEmailHtml({
+          invitedByName: data.inviter.user.name,
+          invitedByEmail: data.inviter.user.email,
+          companyName: data.organization.name,
+          role: data.role,
+          inviteLink,
+        });
+
+        await resend.emails.send({
+          from: "Quantix ERP <invites@bennymak.best>",
+          to: data.email,
+          subject: `Invitation to join ${data.organization.name} on Quantix ERP`,
+          html,
+        });
+      },
     }),
     admin(),
     nextCookies()

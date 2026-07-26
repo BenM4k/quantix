@@ -1,27 +1,31 @@
 import "server-only";
 
-import { and, eq, gte, lte } from "drizzle-orm";
+import { and, eq, gte, lte, asc } from "drizzle-orm";
 import { fiscalPeriod } from "@/services/drizzle/schemas";
-import { Tx } from "@/services/drizzle";
+import type { Tx } from "@/services/drizzle";
 
 /**
- * Find the open fiscal period covering a given date. Returns undefined if
- * none is open for that date (either it doesn't exist yet, or it's closed) —
- * the Service layer turns that into an Err, not this function.
+ * Find the open fiscal period covering a given date. Returns null if
+ * none is open for that date.
  */
 export async function getOpenPeriodForDate(
   tx: Tx,
   organizationId: string,
   onDate: string,
 ) {
-  return tx.query.fiscalPeriod.findFirst({
-    where: {
-      organizationId,
-      status: "open",
-      startDate: { lte: onDate },
-      endDate: { gte: onDate },
-    },
-  });
+  const [period] = await tx
+    .select()
+    .from(fiscalPeriod)
+    .where(
+      and(
+        eq(fiscalPeriod.organizationId, organizationId),
+        eq(fiscalPeriod.status, "open"),
+        lte(fiscalPeriod.startDate, onDate),
+        gte(fiscalPeriod.endDate, onDate),
+      ),
+    )
+    .limit(1);
+  return period || null;
 }
 
 export async function getFiscalPeriodById(
@@ -29,10 +33,26 @@ export async function getFiscalPeriodById(
   organizationId: string,
   fiscalPeriodId: string,
 ) {
-  return tx.query.fiscalPeriod.findFirst({
-    where: {
-      organizationId,
-      id: fiscalPeriodId,
-    },
-  });
+  const [period] = await tx
+    .select()
+    .from(fiscalPeriod)
+    .where(
+      and(
+        eq(fiscalPeriod.organizationId, organizationId),
+        eq(fiscalPeriod.id, fiscalPeriodId),
+      ),
+    )
+    .limit(1);
+  return period || null;
+}
+
+export async function getFiscalPeriodsList(
+  tx: Tx,
+  organizationId: string,
+) {
+  return tx
+    .select()
+    .from(fiscalPeriod)
+    .where(eq(fiscalPeriod.organizationId, organizationId))
+    .orderBy(asc(fiscalPeriod.startDate));
 }

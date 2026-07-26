@@ -6,6 +6,7 @@ import {
   unique,
   index,
   timestamp,
+  bigint,
 } from "drizzle-orm/pg-core";
 
 import {
@@ -36,6 +37,10 @@ export const warehouse = pgTable(
     organizationId: organizationColumn(),
 
     name: text("name").notNull(),
+
+    address: text("address"),
+
+    imageUrl: text("image_url"),
 
     isDefault: boolean("is_default").notNull().default(false),
 
@@ -71,6 +76,8 @@ export const product = pgTable(
 
     name: text("name").notNull(),
 
+    imageUrl: text("image_url"),
+
     uom: text("uom").notNull().default("unit"),
 
     sellPrice: money("sell_price").notNull().default("0"),
@@ -103,18 +110,7 @@ export const product = pgTable(
  *
  * SOURCE OF TRUTH FOR STOCK.
  *
- * Insert only.
- *
- * Examples:
- *
- * +10 purchase_receipt
- * -2 sale
- * -3 adjustment
- *
- * Current stock:
- *
- * SUM(quantity_delta)
- *
+ * Insert-only, immutable.
  * ============================================================ */
 
 export const stockLedgerEntry = pgTable(
@@ -128,31 +124,21 @@ export const stockLedgerEntry = pgTable(
 
     warehouseId: uuid("warehouse_id").notNull(),
 
+    quantity: quantity("quantity").notNull(),
+
     quantityDelta: quantity("quantity_delta").notNull(),
 
     unitCost: money("unit_cost").notNull().default("0"),
 
     movementType: stockMovementTypeEnum("movement_type").notNull(),
 
-    /*
-     * Polymorphic source.
-     *
-     * Examples:
-     *
-     * invoice
-     * stock_adjustment
-     * purchase_receipt
-     */
-    sourceType: text("source_type"),
+    sourceType: text("source_type").notNull().default("manual"),
 
     sourceId: uuid("source_id"),
 
-    occurredAt: timestamp("occurred_at", {
-      withTimezone: true,
-      mode: "date",
-    })
-      .defaultNow()
-      .notNull(),
+    reason: text("reason"),
+
+    sequenceNumber: bigint("sequence_number", { mode: "number" }).notNull(),
 
     createdBy: uuid("created_by").notNull(),
 
@@ -168,15 +154,55 @@ export const stockLedgerEntry = pgTable(
       table.warehouseId,
     ),
 
-    index("stock_entry_product_warehouse_idx").on(
+    index("stock_entry_product_warehouse_seq_idx").on(
+      table.organizationId,
+      table.productId,
+      table.warehouseId,
+      table.sequenceNumber,
+    ),
+
+    index("stock_entry_source_idx").on(table.sourceType, table.sourceId),
+
+    index("stock_entry_date_idx").on(table.organizationId, table.createdAt),
+  ],
+);
+
+/* ============================================================
+ * Product Stock Summary (Cache of quantity & average cost)
+ * ============================================================ */
+
+export const productStockSummary = pgTable(
+  "product_stock_summary",
+  {
+    id: uuidPk(),
+
+    organizationId: organizationColumn(),
+
+    productId: uuid("product_id").notNull(),
+
+    warehouseId: uuid("warehouse_id").notNull(),
+
+    quantityOnHand: quantity("quantity_on_hand").notNull().default("0"),
+
+    averageCost: money("average_cost").notNull().default("0"),
+
+    lastSequenceNumber: bigint("last_sequence_number", { mode: "number" })
+      .notNull()
+      .default(0),
+
+    ...timestamps(),
+  },
+  (table) => [
+    unique("product_stock_summary_org_prod_wh_unique").on(
       table.organizationId,
       table.productId,
       table.warehouseId,
     ),
 
-    index("stock_entry_source_idx").on(table.sourceType, table.sourceId),
-
-    index("stock_entry_date_idx").on(table.organizationId, table.occurredAt),
+    index("product_stock_summary_org_prod_idx").on(
+      table.organizationId,
+      table.productId,
+    ),
   ],
 );
 
@@ -184,9 +210,6 @@ export const stockLedgerEntry = pgTable(
  * Stock Adjustment
  *
  * Header/audit record.
- *
- * The actual quantity change happens through
- * stock_ledger_entry rows.
  * ============================================================ */
 
 export const stockAdjustment = pgTable(
@@ -232,6 +255,11 @@ export type StockLedgerEntry = typeof stockLedgerEntry.$inferSelect;
 
 export type NewStockLedgerEntry = typeof stockLedgerEntry.$inferInsert;
 
+export type ProductStockSummary = typeof productStockSummary.$inferSelect;
+
+export type NewProductStockSummary = typeof productStockSummary.$inferInsert;
+
 export type StockAdjustment = typeof stockAdjustment.$inferSelect;
 
 export type NewStockAdjustment = typeof stockAdjustment.$inferInsert;
+

@@ -18,6 +18,11 @@ export const fiscalPeriodStatusEnum = pgEnum("fiscal_period_status", [
  * Accounting
  * ============================================================ */
 
+export const normalBalanceEnum = pgEnum("normal_balance", [
+  "debit",
+  "credit",
+]);
+
 export const ledgerAccountTypeEnum = pgEnum("ledger_account_type", [
   "asset",
   "liability",
@@ -32,6 +37,7 @@ export const journalSourceTypeEnum = pgEnum("journal_source_type", [
   "invoice",
   "payment",
   "manual",
+  "adjustment",
   "stock_adjustment",
   "payroll",
 ]);
@@ -41,12 +47,11 @@ export const journalSourceTypeEnum = pgEnum("journal_source_type", [
  * ============================================================ */
 
 export const stockMovementTypeEnum = pgEnum("stock_movement_type", [
-  "sale",
-  "purchase_receipt",
-  "adjustment",
-  "transfer_in",
-  "transfer_out",
   "initial",
+  "adjustment_in",
+  "adjustment_out",
+  "sale",
+  "sale_reversal",
 ]);
 
 /* ============================================================
@@ -54,11 +59,28 @@ export const stockMovementTypeEnum = pgEnum("stock_movement_type", [
  * ============================================================ */
 
 export const invoiceStatusEnum = pgEnum("invoice_status", [
+  "unpaid",
   "draft",
   "sent",
   "partial",
   "paid",
   "void",
+]);
+
+export const quoteStatusEnum = pgEnum("quote_status", [
+  "draft",
+  "sent",
+  "accepted",
+  "declined",
+  "expired",
+  "converted",
+]);
+
+export const orderStatusEnum = pgEnum("order_status", [
+  "draft",
+  "confirmed",
+  "converted",
+  "cancelled",
 ]);
 
 export const paymentMethodEnum = pgEnum("payment_method", [
@@ -77,3 +99,16 @@ export const auditActionEnum = pgEnum("audit_action", [
   "update",
   "delete",
 ]);
+
+export type FiscalYearStatus = (typeof fiscalYearStatusEnum.enumValues)[number];
+export type FiscalPeriodStatus = (typeof fiscalPeriodStatusEnum.enumValues)[number];
+export type NormalBalance = (typeof normalBalanceEnum.enumValues)[number];
+export type LedgerAccountType = (typeof ledgerAccountTypeEnum.enumValues)[number];
+export type JournalStatus = (typeof journalStatusEnum.enumValues)[number];
+export type JournalSourceType = (typeof journalSourceTypeEnum.enumValues)[number];
+export type StockMovementType = (typeof stockMovementTypeEnum.enumValues)[number];
+export type InvoiceStatus = (typeof invoiceStatusEnum.enumValues)[number];
+export type PaymentMethod = (typeof paymentMethodEnum.enumValues)[number];
+export type AuditAction = (typeof auditActionEnum.enumValues)[number];
+export type QuoteStatus = (typeof quoteStatusEnum.enumValues)[number];
+export type OrderStatus = (typeof orderStatusEnum.enumValues)[number];

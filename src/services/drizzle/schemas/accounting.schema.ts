@@ -13,6 +13,7 @@ import {
   journalSourceTypeEnum,
   journalStatusEnum,
   ledgerAccountTypeEnum,
+  normalBalanceEnum,
 } from "./tables.enums";
 
 /* ============================================================
@@ -32,7 +33,11 @@ export const ledgerAccount = pgTable(
 
     type: ledgerAccountTypeEnum("type").notNull(),
 
+    normalBalance: normalBalanceEnum("normal_balance").notNull().default("debit"),
+
     parentAccountId: uuid("parent_account_id"),
+
+    isBankAccount: boolean("is_bank_account").notNull().default(false),
 
     // Future:
     // department dimension
@@ -88,6 +93,8 @@ export const journalEntry = pgTable(
 
     sourceId: uuid("source_id"),
 
+    reversalOfEntryId: uuid("reversal_of_entry_id"),
+
     status: journalStatusEnum("status").notNull().default("posted"),
 
     createdBy: uuid("created_by").notNull(),
@@ -110,6 +117,8 @@ export const journalEntry = pgTable(
     index("journal_entry_status_idx").on(table.organizationId, table.status),
 
     index("journal_entry_source_idx").on(table.sourceType, table.sourceId),
+
+    index("journal_entry_reversal_idx").on(table.reversalOfEntryId),
 
     index("journal_entry_period_idx").on(table.fiscalPeriodId),
   ],

@@ -28,9 +28,9 @@ Every module still follows `UI → Action → Service → DAL → Database`.
 - [ ] Stripe (or equivalent) for SaaS billing/subscription — this is MVP-critical and easy to forget since it's not "ERP logic"
 - [ ] BullMQ + Redis (`services/bullmq/`) — needed early for PDF/email jobs
 - [ ] Logger (`lib/logger/`)
-- [ ] Zod validation
-- [ ] Shared `Ok<T>` / `Err<E>` result type
-- [ ] Email service (transactional)
+- [x] Zod validation
+- [x] Shared `Ok<T>` / `Err<E>` result type
+- [x] Email service (transactional)
 - [ ] File storage (S3-compatible) — for invoice PDFs, receipts
 
 ---
