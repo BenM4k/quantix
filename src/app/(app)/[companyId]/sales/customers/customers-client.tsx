@@ -3,30 +3,286 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ColumnDef } from "@tanstack/react-table";
-import { DataTable } from "@/components/data-table/data-table";
 import { Customer } from "@/services/drizzle/schemas";
 import { canX } from "@/lib/permissions";
+import { cn } from "@/lib/utils";
 import { customerSchema, type CustomerInput } from "@/lib/schemas/customer";
 import { useCustomerManager } from "./hooks/use-customer-manager";
-import { Field, FieldLabel, FieldError, FieldGroup } from "@/components/ui/field";
+import {
+  Field,
+  FieldLabel,
+  FieldError,
+  FieldGroup,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Plus, X, Trash2, Loader2, Building, Mail, Phone, Clock } from "lucide-react";
-import { PageHeader } from "@/components/layout/page-header";
+import {
+  Plus,
+  X,
+  Trash2,
+  Loader2,
+  Building2,
+  Mail,
+  Phone,
+  Users,
+  UserCheck,
+  Clock,
+  Search,
+  ChevronDown,
+} from "lucide-react";
+import {
+  SplitPanelShell,
+  ListRow,
+  EmptyState,
+} from "@/components/layout/split-panel-shell";
+import type { CustomerKpis } from "@/services/module-kpis/module-kpis.service";
 
 interface CustomersClientProps {
   companyId: string;
   customers: Customer[];
   totalCustomers: number;
   userRole: string;
+  kpis: CustomerKpis;
 }
 
+// ─── Detail Panel ─────────────────────────────────────────────────────────────
+function CustomerDetailPanel({
+  customer,
+  companyId,
+  userRole,
+  isPending,
+  confirmDeleteId,
+  setConfirmDeleteId,
+  handleDelete,
+  editForm,
+  handleEditSubmit,
+  successMessage,
+  errorMessage,
+  canUpdate,
+  canDelete,
+}: {
+  customer: Customer | null;
+  companyId: string;
+  userRole: string;
+  isPending: boolean;
+  confirmDeleteId: string | null;
+  setConfirmDeleteId: (id: string | null) => void;
+  handleDelete: (id: string) => void;
+  editForm: ReturnType<typeof useForm<CustomerInput>>;
+  handleEditSubmit: (data: CustomerInput) => void;
+  successMessage: string | null;
+  errorMessage: string | null;
+  canUpdate: boolean;
+  canDelete: boolean;
+}) {
+  if (!customer) {
+    return (
+      <EmptyState
+        icon={Building2}
+        title="Select a customer"
+        description="Click any customer on the left to inspect terms and contact details."
+      />
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full justify-between gap-6">
+      {/* Top Header & Metadata */}
+      <div className="space-y-6">
+        <div className="flex items-start justify-between gap-4 pb-4 border-b border-white/10">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-12 w-12 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300 font-black text-base shrink-0">
+              {customer.name.slice(0, 2).toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-xl font-black text-white truncate">
+                {customer.name}
+              </h2>
+              <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-zinc-400">
+                {customer.email && (
+                  <span className="flex items-center gap-1">
+                    <Mail className="h-3 w-3" /> {customer.email}
+                  </span>
+                )}
+                {customer.phone && (
+                  <span className="flex items-center gap-1">
+                    <Phone className="h-3 w-3" /> {customer.phone}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <span
+            className={cn(
+              "text-[10px] font-bold px-2.5 py-0.5 rounded-full border shrink-0",
+              customer.active
+                ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                : "bg-white/10 text-zinc-400 border-white/10",
+            )}
+          >
+            {customer.active ? "Active" : "Inactive"}
+          </span>
+        </div>
+
+        {/* Quick Parameters */}
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: "Tax Identification", value: customer.taxId || "—" },
+            {
+              label: "Payment Terms",
+              value: `Net ${customer.paymentTermsDays} Days`,
+            },
+            {
+              label: "Customer Since",
+              value: customer.createdAt
+                ? new Date(customer.createdAt).toLocaleDateString("en-US", {
+                    month: "short",
+                    year: "numeric",
+                  })
+                : "—",
+            },
+          ].map(({ label, value }) => (
+            <div
+              key={label}
+              className="rounded-2xl bg-primary/20 border border-primary/25 px-3.5 py-3"
+            >
+              <p className="text-[10px] text-foreground/70 uppercase tracking-wider font-semibold">
+                {label}
+              </p>
+              <p className="text-sm font-bold text-foreground mt-1 truncate">
+                {value}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Edit Form Fields */}
+        {canUpdate && (
+          <div className="space-y-4">
+            {errorMessage && (
+              <div className="p-3 rounded-2xl text-xs bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/30">
+                {errorMessage}
+              </div>
+            )}
+            {successMessage && (
+              <div className="p-3 rounded-2xl text-xs bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                {successMessage}
+              </div>
+            )}
+            <form
+              id="edit-cust-form"
+              onSubmit={editForm.handleSubmit(handleEditSubmit)}
+              className="space-y-3"
+            >
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <label className="text-[10px] font-semibold text-foreground/80 block mb-1">
+                    Company Name
+                  </label>
+                  <input
+                    {...editForm.register("name")}
+                    className="w-full px-3 py-2 rounded-xl bg-background/80 border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                  {editForm.formState.errors.name && (
+                    <span className="text-[10px] text-rose-600 dark:text-rose-400 mt-1 block">
+                      {editForm.formState.errors.name.message}
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <label className="text-[10px] font-semibold text-foreground/80 block mb-1">
+                    Billing Email
+                  </label>
+                  <input
+                    {...editForm.register("email")}
+                    type="email"
+                    className="w-full px-3 py-2 rounded-xl bg-background/80 border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-semibold text-foreground/80 block mb-1">
+                    Phone Contact
+                  </label>
+                  <input
+                    {...editForm.register("phone")}
+                    className="w-full px-3 py-2 rounded-xl bg-background/80 border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-semibold text-foreground/80 block mb-1">
+                    Tax / VAT ID
+                  </label>
+                  <input
+                    {...editForm.register("taxId")}
+                    className="w-full px-3 py-2 rounded-xl bg-background/80 border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+              </div>
+            </form>
+          </div>
+        )}
+      </div>
+
+      {/* Bottom Actions */}
+      <div className="pt-5 border-t border-primary/25 flex items-center justify-between gap-3">
+        {canDelete &&
+          (confirmDeleteId === customer.id ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-rose-600 dark:text-rose-400 font-bold">
+                Are you sure?
+              </span>
+              <button
+                type="button"
+                onClick={() => handleDelete(customer.id)}
+                disabled={isPending}
+                className="px-4 py-2 rounded-full bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition-colors flex items-center gap-1.5"
+              >
+                {isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                <span>Confirm Delete</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmDeleteId(null)}
+                className="px-3 py-2 rounded-full bg-primary/20 text-foreground text-xs font-semibold hover:bg-primary/30"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmDeleteId(customer.id)}
+              className="h-10 px-4 rounded-full border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-300 text-xs font-semibold hover:bg-rose-500/20 transition-colors flex items-center gap-1.5"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              <span>Delete</span>
+            </button>
+          ))}
+
+        {canUpdate && (
+          <button
+            form="edit-cust-form"
+            type="submit"
+            disabled={isPending}
+            className="h-10 px-6 rounded-full bg-primary text-primary-foreground text-xs font-extrabold hover:bg-primary/90 transition-all shadow-lg flex items-center gap-2 ml-auto"
+          >
+            {isPending && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
+            <span>Save Changes</span>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Client ──────────────────────────────────────────────────────────────
 export function CustomersClient({
   companyId,
   customers,
   totalCustomers,
   userRole,
+  kpis,
 }: CustomersClientProps) {
   const {
     isCreateOpen,
@@ -39,7 +295,6 @@ export function CustomersClient({
     setConfirmDeleteId,
     openCreateDialog,
     openCustomerSheet,
-    closeCustomerSheet,
     handleCreateSubmit,
     handleEditSubmit,
     handleDeleteCustomer,
@@ -49,7 +304,6 @@ export function CustomersClient({
   const canUpdate = canX(userRole, { id: companyId }, "customer:update");
   const canDelete = canX(userRole, { id: companyId }, "customer:delete");
 
-  // Create Form
   const createForm = useForm<CustomerInput>({
     resolver: zodResolver(customerSchema),
     defaultValues: {
@@ -57,12 +311,10 @@ export function CustomersClient({
       email: "",
       phone: "",
       taxId: "",
-      paymentTermsDays: 0,
+      paymentTermsDays: 30,
       active: true,
     },
   });
-
-  // Edit Form
   const editForm = useForm<CustomerInput>({
     resolver: zodResolver(customerSchema),
     defaultValues: {
@@ -70,12 +322,11 @@ export function CustomersClient({
       email: "",
       phone: "",
       taxId: "",
-      paymentTermsDays: 0,
+      paymentTermsDays: 30,
       active: true,
     },
   });
 
-  // Sync sheet form with selected customer
   React.useEffect(() => {
     if (selectedCustomer) {
       editForm.reset({
@@ -90,317 +341,253 @@ export function CustomersClient({
     }
   }, [selectedCustomer, editForm]);
 
-  const columns: ColumnDef<Customer>[] = [
-    {
-      accessorKey: "name",
-      header: "Customer Name",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center font-bold text-primary text-xs shrink-0">
-            <Building className="h-4 w-4" />
-          </div>
-          <div>
-            <div className="font-semibold text-foreground">{row.original.name}</div>
-            <div className="text-xs text-muted-foreground">{row.original.taxId ? `Tax ID: ${row.original.taxId}` : "No Tax ID"}</div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "email",
-      header: "Contact Email",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Mail className="h-3.5 w-3.5" />
-          <span>{row.original.email || "—"}</span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "phone",
-      header: "Phone",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Phone className="h-3.5 w-3.5" />
-          <span>{row.original.phone || "—"}</span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "paymentTermsDays",
-      header: "Payment Terms",
-      cell: ({ row }) => (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground border border-border/40">
-          <Clock className="h-3 w-3" />
-          Net {row.original.paymentTermsDays} Days
-        </span>
-      ),
-    },
-  ];
+  const [search, setSearch] = React.useState("");
+  const [activeFilter, setActiveFilter] = React.useState<string>("all");
+
+  const filtered = customers.filter((c) => {
+    const matches =
+      !search ||
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      (c.email ?? "").toLowerCase().includes(search.toLowerCase());
+    if (!matches) return false;
+    if (activeFilter === "active") return c.active;
+    if (activeFilter === "inactive") return !c.active;
+    return true;
+  });
+
+  const activeCount = customers.filter((c) => c.active).length;
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Customer Master"
-        description="Manage your customer directory, contact details, tax identifiers, and credit/payment terms."
-        icon={Building}
-        actions={
-          canCreate ? (
-            <Button onClick={openCreateDialog} className="flex items-center gap-2">
+    <>
+      <SplitPanelShell
+        title="Customers Directory"
+        subtitle={`${totalCustomers} total · manage customer portfolio and billing parameters`}
+        headerAction={
+          canCreate && (
+            <button
+              onClick={openCreateDialog}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-xs font-bold hover:opacity-90 transition-opacity shadow-xs"
+            >
               <Plus className="h-4 w-4" />
               <span>Create Customer</span>
-            </Button>
-          ) : undefined
+            </button>
+          )
+        }
+        filterToolbar={
+          <>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-foreground text-background font-bold text-xs shadow-xs">
+                <span>Active filters</span>
+                <span className="h-4 w-4 rounded-full bg-background text-foreground text-[10px] flex items-center justify-center font-bold">
+                  {search ? 1 : 0}
+                </span>
+              </span>
+
+              <button className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-border/80 bg-card text-foreground font-semibold hover:bg-muted transition-colors">
+                <span>All customer accounts</span>
+                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search customers..."
+                  className="pl-9 pr-4 h-9 text-xs rounded-full border border-border/80 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary w-48 sm:w-56"
+                />
+              </div>
+            </div>
+          </>
+        }
+        listTabs={
+          <>
+            <button
+              onClick={() => setActiveFilter("all")}
+              className={cn(
+                "px-4 py-1.5 rounded-full text-xs font-semibold transition-all",
+                activeFilter === "all"
+                  ? "bg-primary text-primary-foreground font-bold shadow-sm"
+                  : "text-foreground/80 hover:text-foreground hover:bg-primary/20",
+              )}
+            >
+              All Customers
+            </button>
+            <button
+              onClick={() => setActiveFilter("active")}
+              className={cn(
+                "px-4 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5",
+                activeFilter === "active"
+                  ? "bg-primary text-primary-foreground font-bold shadow-sm"
+                  : "text-foreground/80 hover:text-foreground hover:bg-primary/20",
+              )}
+            >
+              <span>Active</span>
+              <span
+                className={cn(
+                  "text-[10px] font-bold px-1.5 py-0.2 rounded-full",
+                  activeFilter === "active"
+                    ? "bg-primary-foreground/20 text-primary-foreground"
+                    : "text-muted-foreground",
+                )}
+              >
+                {activeCount}
+              </span>
+            </button>
+            <button
+              onClick={() => setActiveFilter("inactive")}
+              className={cn(
+                "px-4 py-1.5 rounded-full text-xs font-semibold transition-all",
+                activeFilter === "inactive"
+                  ? "bg-primary text-primary-foreground font-bold shadow-sm"
+                  : "text-foreground/80 hover:text-foreground hover:bg-primary/20",
+              )}
+            >
+              Inactive
+            </button>
+          </>
+        }
+        listTitle="Customer Accounts"
+        listChildren={
+          filtered.length === 0 ? (
+            <EmptyState icon={Building2} title="No customers found" />
+          ) : (
+            filtered.map((c) => (
+              <ListRow
+                key={c.id}
+                id={c.id}
+                primary={c.name}
+                secondary={c.email || c.phone || "No direct contact"}
+                meta={`Net ${c.paymentTermsDays}d`}
+                selected={selectedCustomer?.id === c.id}
+                onClick={() => openCustomerSheet(c)}
+                badge={
+                  <span
+                    className={cn(
+                      "text-[10px] font-bold px-2 py-0.5 rounded-full border",
+                      c.active
+                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                        : "bg-white/10 text-zinc-400 border-white/10",
+                    )}
+                  >
+                    {c.active ? "Active" : "Inactive"}
+                  </span>
+                }
+              />
+            ))
+          )
+        }
+        detailChildren={
+          <CustomerDetailPanel
+            customer={selectedCustomer}
+            companyId={companyId}
+            userRole={userRole}
+            isPending={isPending}
+            confirmDeleteId={confirmDeleteId}
+            setConfirmDeleteId={setConfirmDeleteId}
+            handleDelete={handleDeleteCustomer}
+            editForm={editForm}
+            handleEditSubmit={handleEditSubmit}
+            successMessage={successMessage}
+            errorMessage={errorMessage}
+            canUpdate={canUpdate}
+            canDelete={canDelete}
+          />
         }
       />
 
-      <DataTable
-        columns={columns}
-        data={customers}
-        total={totalCustomers}
-        onRowClick={openCustomerSheet}
-        searchPlaceholder="Search customers by name, email, or phone..."
-      />
-
-      {/* Create Dialog */}
+      {/* Create Modal */}
       {isCreateOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-          <div className="w-full max-w-lg glass-surface-elevated border border-border/80 rounded-3xl p-8 md:p-10 shadow-2xl space-y-6 animate-in fade-in zoom-in-95">
+          <div className="w-full max-w-lg bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-border/40 pb-4">
-              <h3 className="text-2xl font-bold tracking-tight text-foreground">Create Customer Master</h3>
+              <h3 className="text-xl font-bold text-foreground">
+                Create Customer Account
+              </h3>
               <button
                 onClick={() => setIsCreateOpen(false)}
-                className="p-2 rounded-xl hover:bg-muted text-muted-foreground transition-colors"
+                className="p-2 rounded-xl hover:bg-muted text-muted-foreground"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
-
-            {errorMessage && (
-              <div className="p-4 rounded-xl text-xs bg-destructive/10 text-destructive border border-destructive/20 font-medium">
-                {errorMessage}
-              </div>
-            )}
-
-            <form onSubmit={createForm.handleSubmit(handleCreateSubmit)} className="space-y-6">
+            <form
+              onSubmit={createForm.handleSubmit(handleCreateSubmit)}
+              className="space-y-4"
+            >
               <FieldGroup>
-                <Field>
-                  <FieldLabel htmlFor="cust-name">Customer / Company Name *</FieldLabel>
-                  <Input
-                    id="cust-name"
-                    {...createForm.register("name")}
-                    placeholder="Acme Global Logistics"
-                  />
-                  {createForm.formState.errors.name && (
-                    <FieldError>{createForm.formState.errors.name.message}</FieldError>
-                  )}
-                </Field>
-
                 <div className="grid grid-cols-2 gap-4">
                   <Field>
-                    <FieldLabel htmlFor="cust-email">Email</FieldLabel>
+                    <FieldLabel>Company Name *</FieldLabel>
                     <Input
-                      id="cust-email"
-                      type="email"
+                      {...createForm.register("name")}
+                      placeholder="Acme Corp."
+                    />
+                    {createForm.formState.errors.name && (
+                      <FieldError>
+                        {createForm.formState.errors.name.message}
+                      </FieldError>
+                    )}
+                  </Field>
+                  <Field>
+                    <FieldLabel>Billing Email</FieldLabel>
+                    <Input
                       {...createForm.register("email")}
+                      type="email"
                       placeholder="billing@acme.com"
                     />
-                    {createForm.formState.errors.email && (
-                      <FieldError>{createForm.formState.errors.email.message}</FieldError>
-                    )}
                   </Field>
-
                   <Field>
-                    <FieldLabel htmlFor="cust-phone">Phone</FieldLabel>
+                    <FieldLabel>Phone Number</FieldLabel>
                     <Input
-                      id="cust-phone"
                       {...createForm.register("phone")}
-                      placeholder="+1 (555) 019-2834"
+                      placeholder="+1 555 0199"
                     />
                   </Field>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
                   <Field>
-                    <FieldLabel htmlFor="cust-tax">Tax ID / VAT Registration</FieldLabel>
+                    <FieldLabel>Tax ID / VAT</FieldLabel>
                     <Input
-                      id="cust-tax"
                       {...createForm.register("taxId")}
-                      placeholder="US982341092"
+                      placeholder="US-987654"
                     />
-                  </Field>
-
-                  <Field>
-                    <FieldLabel htmlFor="cust-terms">Payment Terms (Days) *</FieldLabel>
-                    <Input
-                      id="cust-terms"
-                      type="number"
-                      {...createForm.register("paymentTermsDays", { valueAsNumber: true })}
-                      placeholder="30"
-                    />
-                    {createForm.formState.errors.paymentTermsDays && (
-                      <FieldError>{createForm.formState.errors.paymentTermsDays.message}</FieldError>
-                    )}
                   </Field>
                 </div>
+                <Field>
+                  <FieldLabel>Default Payment Terms (Days)</FieldLabel>
+                  <Input
+                    type="number"
+                    {...createForm.register("paymentTermsDays", {
+                      valueAsNumber: true,
+                    })}
+                    defaultValue={30}
+                  />
+                </Field>
               </FieldGroup>
-
               <div className="flex justify-end gap-3 pt-4 border-t border-border/40">
-                <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsCreateOpen(false)}
+                >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isPending}>
-                  {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  Save Customer
+                <Button
+                  type="submit"
+                  disabled={isPending}
+                  className="bg-primary text-primary-foreground font-bold"
+                >
+                  {isPending && (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  )}
+                  Create Customer
                 </Button>
               </div>
             </form>
           </div>
         </div>
       )}
-
-      {/* Edit / Detail Sheet */}
-      {selectedCustomer && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-background/80 backdrop-blur-sm">
-          <div className="w-full max-w-lg bg-card border-l border-border/80 h-full p-6 shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-200 overflow-y-auto">
-            <div className="space-y-6">
-              <div className="flex items-center justify-between border-b border-border/40 pb-4">
-                <div>
-                  <h3 className="text-lg font-bold text-foreground">{selectedCustomer.name}</h3>
-                  <p className="text-xs text-muted-foreground">
-                    {selectedCustomer.taxId ? `Tax ID: ${selectedCustomer.taxId}` : "Customer Details"}
-                  </p>
-                </div>
-                <button
-                  onClick={closeCustomerSheet}
-                  className="p-1 rounded-lg hover:bg-muted text-muted-foreground"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-
-              {errorMessage && (
-                <div className="p-3 rounded-lg text-xs bg-destructive/10 text-destructive border border-destructive/20">
-                  {errorMessage}
-                </div>
-              )}
-
-              {successMessage && (
-                <div className="p-3 rounded-lg text-xs bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                  {successMessage}
-                </div>
-              )}
-
-              <form id="edit-customer-form" onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-4">
-                <FieldGroup>
-                  <Field>
-                    <FieldLabel htmlFor="edit-cust-name">Customer Name</FieldLabel>
-                    <Input
-                      id="edit-cust-name"
-                      disabled={!canUpdate}
-                      {...editForm.register("name")}
-                    />
-                    {editForm.formState.errors.name && (
-                      <FieldError>{editForm.formState.errors.name.message}</FieldError>
-                    )}
-                  </Field>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <Field>
-                      <FieldLabel htmlFor="edit-cust-email">Email</FieldLabel>
-                      <Input
-                        id="edit-cust-email"
-                        type="email"
-                        disabled={!canUpdate}
-                        {...editForm.register("email")}
-                      />
-                    </Field>
-
-                    <Field>
-                      <FieldLabel htmlFor="edit-cust-phone">Phone</FieldLabel>
-                      <Input
-                        id="edit-cust-phone"
-                        disabled={!canUpdate}
-                        {...editForm.register("phone")}
-                      />
-                    </Field>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <Field>
-                      <FieldLabel htmlFor="edit-cust-tax">Tax ID</FieldLabel>
-                      <Input
-                        id="edit-cust-tax"
-                        disabled={!canUpdate}
-                        {...editForm.register("taxId")}
-                      />
-                    </Field>
-
-                    <Field>
-                      <FieldLabel htmlFor="edit-cust-terms">Payment Terms (Days)</FieldLabel>
-                      <Input
-                        id="edit-cust-terms"
-                        type="number"
-                        disabled={!canUpdate}
-                        {...editForm.register("paymentTermsDays", { valueAsNumber: true })}
-                      />
-                    </Field>
-                  </div>
-                </FieldGroup>
-              </form>
-            </div>
-
-            <div className="pt-6 border-t border-border/40 flex items-center justify-between">
-              {canDelete ? (
-                confirmDeleteId === selectedCustomer.id ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-destructive font-medium">Confirm?</span>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDeleteCustomer(selectedCustomer.id)}
-                      disabled={isPending}
-                    >
-                      Yes, Delete
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setConfirmDeleteId(null)}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setConfirmDeleteId(selectedCustomer.id)}
-                    className="text-destructive border-destructive/20 hover:bg-destructive/10"
-                  >
-                    <Trash2 className="h-4 w-4 mr-1.5" />
-                    Delete Customer
-                  </Button>
-                )
-              ) : (
-                <div />
-              )}
-
-              <div className="flex items-center gap-3">
-                <Button variant="outline" onClick={closeCustomerSheet}>
-                  Close
-                </Button>
-                {canUpdate && (
-                  <Button form="edit-customer-form" type="submit" disabled={isPending}>
-                    {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                    Save Changes
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    </>
   );
 }

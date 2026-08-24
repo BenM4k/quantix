@@ -162,11 +162,14 @@ export async function recordMovementCore(
     unitCost: String(resolvedUnitCost),
     movementType,
     sourceType,
-    sourceId,
+    // Drizzle RC serializes null on uuid columns as "" which Postgres rejects.
+    // Pass undefined to omit the field and let the DB use its NULL default.
+    sourceId: sourceId ?? undefined,
     reason: reason || null,
     sequenceNumber: nextSeq,
     createdBy: userId,
   });
+
 
   // 8. Update ProductStockSummary cache
   await upsertProductStockSummary(tx, companyId, productId, targetWarehouseId, {
@@ -197,9 +200,11 @@ export async function recordMovement(
       recordMovementCore(tx, companyId, params, userId),
     );
   } catch (cause) {
+    console.error("[recordMovement] Database error:", cause);
     return Err({
       code: "DB_ERROR",
-      message: cause instanceof Error ? cause.message : "Database operation failed",
+      message: "Failed to record stock movement. Please try again or contact support.",
+
     });
   }
 }
@@ -252,9 +257,10 @@ export async function rebuildFromLedger(
       return Ok(updatedSummary);
     });
   } catch (cause) {
+    console.error("[rebuildFromLedger] Database error:", cause);
     return Err({
       code: "DB_ERROR",
-      message: cause instanceof Error ? cause.message : "Failed to rebuild stock summary",
+      message: "Failed to rebuild stock summary. Please try again or contact support.",
     });
   }
 }
@@ -277,9 +283,10 @@ export async function getStockLedgerEntriesService(
     );
     return Ok(res);
   } catch (cause) {
+    console.error("[getStockLedgerEntriesService] Database error:", cause);
     return Err({
       code: "DB_ERROR",
-      message: cause instanceof Error ? cause.message : "Failed to fetch stock ledger",
+      message: "Failed to fetch stock ledger. Please try again or contact support.",
     });
   }
 }
@@ -305,9 +312,10 @@ export async function getStockLedgerEntryByIdService(
     }
     return Ok(res);
   } catch (cause) {
+    console.error("[getStockLedgerEntryByIdService] Database error:", cause);
     return Err({
       code: "DB_ERROR",
-      message: cause instanceof Error ? cause.message : "Failed to fetch stock ledger entry",
+      message: "Failed to fetch stock ledger entry. Please try again or contact support.",
     });
   }
 }
@@ -337,9 +345,10 @@ export async function getProductStockSummaryService(
     });
     return Ok(res);
   } catch (cause) {
+    console.error("[getProductStockSummaryService] Database error:", cause);
     return Err({
       code: "DB_ERROR",
-      message: cause instanceof Error ? cause.message : "Failed to fetch product stock summary",
+      message: "Failed to fetch product stock summary. Please try again or contact support.",
     });
   }
 }

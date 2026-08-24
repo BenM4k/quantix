@@ -61,14 +61,10 @@ export async function createInvoiceService(
 
   try {
     const result = await withTenantTransaction(companyId, async (tx) => {
-      // 1. Validate customer
-      const cust = await getActiveCustomerById(tx, companyId, input.customerId);
-      if (!cust) {
-        return Err({ code: "NOT_FOUND" as const, message: "Customer not found or inactive." });
-      }
-
-      // 2. If sourceOrderId given, validate order status === "confirmed"
+      let resolvedCustomerId = input.customerId;
       let orderLinesToCopy = input.lines;
+
+      // 1. If sourceOrderId given, validate order status === "confirmed" and resolve customer
       if (input.sourceOrderId) {
         const order = await getOrderWithLinesById(tx, companyId, input.sourceOrderId);
         if (!order) {
@@ -80,6 +76,7 @@ export async function createInvoiceService(
             message: `Source order must be in "confirmed" status to convert. Current: "${order.status}".`,
           });
         }
+        resolvedCustomerId = order.customerId;
         // Use order lines if input lines empty
         if (!orderLinesToCopy || orderLinesToCopy.length === 0) {
           orderLinesToCopy = order.lines.map((l) => ({
@@ -90,6 +87,12 @@ export async function createInvoiceService(
             taxRateId: l.taxRateId,
           }));
         }
+      }
+
+      // 2. Validate customer
+      const cust = await getActiveCustomerById(tx, companyId, resolvedCustomerId);
+      if (!cust) {
+        return Err({ code: "NOT_FOUND" as const, message: "Customer not found or inactive." });
       }
 
       if (!orderLinesToCopy || orderLinesToCopy.length === 0) {
@@ -175,7 +178,7 @@ export async function createInvoiceService(
       // 6. Insert Invoice header + InvoiceLine rows
       const createdInvoice = await insertInvoice(tx, {
         organizationId: companyId,
-        customerId: input.customerId,
+        customerId: resolvedCustomerId,
         fiscalPeriodId,
         invoiceNumber,
         status: "unpaid",
@@ -322,9 +325,10 @@ export async function createInvoiceService(
 
     return result;
   } catch (cause) {
+    console.error("[createInvoiceService] Database error:", cause);
     return Err({
       code: "DB_ERROR",
-      message: cause instanceof Error ? cause.message : "Failed to create invoice",
+      message: "Failed to create invoice. Please try again or contact support.",
     });
   }
 }
@@ -398,9 +402,10 @@ export async function voidInvoiceService(
       return Ok(updated!);
     });
   } catch (cause) {
+    console.error("[voidInvoiceService] Database error:", cause);
     return Err({
       code: "DB_ERROR",
-      message: cause instanceof Error ? cause.message : "Failed to void invoice",
+      message: "Failed to void invoice. Please try again or contact support.",
     });
   }
 }
@@ -428,9 +433,10 @@ export async function getInvoiceListService(
     );
     return Ok(res);
   } catch (cause) {
+    console.error("[getInvoiceListService] Database error:", cause);
     return Err({
       code: "DB_ERROR",
-      message: cause instanceof Error ? cause.message : "Failed to fetch invoices",
+      message: "Failed to fetch invoices. Please try again or contact support.",
     });
   }
 }
@@ -453,9 +459,10 @@ export async function getInvoiceDetailService(
     }
     return Ok(res);
   } catch (cause) {
+    console.error("[getInvoiceDetailService] Database error:", cause);
     return Err({
       code: "DB_ERROR",
-      message: cause instanceof Error ? cause.message : "Failed to fetch invoice detail",
+      message: "Failed to fetch invoice details. Please try again or contact support.",
     });
   }
 }

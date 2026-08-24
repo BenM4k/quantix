@@ -6,6 +6,8 @@ import {
 } from "@/dal/ledger-account/queries";
 import { ChartOfAccountsClient } from "./chart-of-accounts-client";
 
+import { CategorySubNav } from "@/components/navigation/category-sub-nav";
+
 interface PageProps {
   params: Promise<{ companyId: string }>;
   searchParams: Promise<{

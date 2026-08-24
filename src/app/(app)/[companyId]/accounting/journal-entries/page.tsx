@@ -6,6 +6,8 @@ import {
 } from "@/dal/journal-entry/queries";
 import { JournalEntriesClient } from "./journal-entries-client";
 
+import { CategorySubNav } from "@/components/navigation/category-sub-nav";
+
 interface PageProps {
   params: Promise<{ companyId: string }>;
   searchParams: Promise<{

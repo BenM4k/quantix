@@ -71,7 +71,7 @@ export const quote = pgTable(
     taxTotal: money("tax_total").notNull().default("0"),
     total: money("total").notNull().default("0"),
     notes: text("notes"),
-    createdBy: uuid("created_by").notNull(),
+    createdBy: text("created_by").notNull(),
     ...timestamps(),
   },
   (table) => [
@@ -137,7 +137,7 @@ export const salesOrder = pgTable(
     taxTotal: money("tax_total").notNull().default("0"),
     total: money("total").notNull().default("0"),
     notes: text("notes"),
-    createdBy: uuid("created_by").notNull(),
+    createdBy: text("created_by").notNull(),
     ...timestamps(),
   },
   (table) => [
@@ -209,7 +209,7 @@ export const invoice = pgTable(
     pdfUrl: text("pdf_url"),
     sentAt: timestamp("sent_at", { withTimezone: true, mode: "date" }),
     notes: text("notes"),
-    createdBy: uuid("created_by").notNull(),
+    createdBy: text("created_by").notNull(),
     ...timestamps(),
   },
   (table) => [
@@ -273,7 +273,7 @@ export const payment = pgTable(
       .notNull(),
     method: paymentMethodEnum("method").notNull(),
     journalEntryId: uuid("journal_entry_id"),
-    createdBy: uuid("created_by").notNull(),
+    createdBy: text("created_by").notNull(),
     ...timestamps(),
   },
   (table) => [
@@ -298,7 +298,7 @@ export const creditNote = pgTable(
     amount: money("amount").notNull(),
     reason: text("reason").notNull(),
     journalEntryId: uuid("journal_entry_id"),
-    createdBy: uuid("created_by").notNull(),
+    createdBy: text("created_by").notNull(),
     ...timestamps(),
   },
   (table) => [

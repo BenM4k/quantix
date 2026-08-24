@@ -1,78 +1,109 @@
-import Link from "next/link";
+import React from "react";
 import { ArrowRight } from "lucide-react";
+import { QuantixLogo } from "./quantix-logo";
 
-interface LandingFooterProps {
-  isLoggedIn: boolean;
-}
-
-export function LandingFooter({ isLoggedIn }: LandingFooterProps) {
+export function LandingFooter() {
   return (
-    <>
-      {/* Bottom CTA Section */}
-      <section className="max-w-7xl mx-auto px-6 py-20 z-10">
-        <div className="p-12 rounded-3xl glass-strong text-center flex flex-col items-center gap-6 relative overflow-hidden">
-          <div className="absolute inset-0 glow-orange opacity-10 pointer-events-none rounded-3xl" />
-          <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-foreground relative z-10">
-            Ready to onboard your tenant?
-          </h2>
-          <p className="text-muted-foreground font-light max-w-2xl leading-relaxed relative z-10">
-            Launch a fast, scalable, isolated company configuration in seconds.
-            Keep your ledgers clean and compliant from day one.
-          </p>
+    <footer className="pt-16 pb-12 border-t border-stone-200/60 dark:border-stone-800/60 bg-[#FAF9F6] dark:bg-stone-950 text-xs text-stone-600 dark:text-stone-400">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-10 lg:gap-8 pb-12">
+          {/* Brand Column */}
+          <div className="lg:col-span-2 space-y-4">
+            <QuantixLogo />
+            <p className="text-stone-500 dark:text-stone-400 text-xs leading-relaxed max-w-sm">
+              The lightweight accounting ERP that turns daily business activity into trusted financial statements.
+            </p>
+            <div className="pt-2 text-[11px] text-stone-400">
+              &copy; {new Date().getFullYear()} Quantix CD. All rights reserved.
+            </div>
+          </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 mt-4 relative z-10">
-            {isLoggedIn ? (
-              <Link
-                href="/dashboard"
-                className="px-8 py-4 rounded-2xl bg-primary hover:opacity-90 text-primary-foreground font-bold transition-all duration-200 shadow-[var(--glass-shadow)] glow-orange flex items-center gap-1.5"
+          {/* Column: Product */}
+          <div className="space-y-3">
+            <h4 className="font-semibold text-stone-900 dark:text-stone-100 text-xs">
+              Product
+            </h4>
+            <ul className="space-y-2 text-stone-500 dark:text-stone-400 text-xs">
+              <li><a href="#product" className="hover:text-stone-900 dark:hover:text-white transition-colors">Overview</a></li>
+              <li><a href="#product" className="hover:text-stone-900 dark:hover:text-white transition-colors">Invoicing</a></li>
+              <li><a href="#product" className="hover:text-stone-900 dark:hover:text-white transition-colors">Inventory</a></li>
+              <li><a href="#product" className="hover:text-stone-900 dark:hover:text-white transition-colors">Accounting</a></li>
+              <li><a href="#product" className="hover:text-stone-900 dark:hover:text-white transition-colors">Reports</a></li>
+            </ul>
+          </div>
+
+          {/* Column: Resources */}
+          <div className="space-y-3">
+            <h4 className="font-semibold text-stone-900 dark:text-stone-100 text-xs">
+              Resources
+            </h4>
+            <ul className="space-y-2 text-stone-500 dark:text-stone-400 text-xs">
+              <li><a href="#resources" className="hover:text-stone-900 dark:hover:text-white transition-colors">Help Center</a></li>
+              <li><a href="#resources" className="hover:text-stone-900 dark:hover:text-white transition-colors">Guides</a></li>
+              <li><a href="#resources" className="hover:text-stone-900 dark:hover:text-white transition-colors">Accounting basics</a></li>
+              <li><a href="#resources" className="hover:text-stone-900 dark:hover:text-white transition-colors">Changelog</a></li>
+            </ul>
+          </div>
+
+          {/* Column: Company */}
+          <div className="space-y-3">
+            <h4 className="font-semibold text-stone-900 dark:text-stone-100 text-xs">
+              Company
+            </h4>
+            <ul className="space-y-2 text-stone-500 dark:text-stone-400 text-xs">
+              <li><a href="#company" className="hover:text-stone-900 dark:hover:text-white transition-colors">About us</a></li>
+              <li><a href="#company" className="hover:text-stone-900 dark:hover:text-white transition-colors">Careers</a></li>
+              <li><a href="#company" className="hover:text-stone-900 dark:hover:text-white transition-colors">Contact</a></li>
+              <li className="pt-2 font-semibold text-stone-900 dark:text-stone-100">Legal</li>
+              <li><a href="#privacy" className="hover:text-stone-900 dark:hover:text-white transition-colors">Privacy</a></li>
+              <li><a href="#terms" className="hover:text-stone-900 dark:hover:text-white transition-colors">Terms</a></li>
+            </ul>
+          </div>
+
+          {/* Column: Stay updated */}
+          <div className="space-y-3">
+            <h4 className="font-semibold text-stone-900 dark:text-stone-100 text-xs">
+              Stay updated
+            </h4>
+            <div className="flex items-center rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 overflow-hidden focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
+              <input
+                type="email"
+                placeholder="Enter your email"
+                className="w-full px-3 py-2 text-base bg-transparent outline-none text-stone-800 dark:text-stone-200 placeholder:text-stone-400"
+              />
+              <button
+                type="button"
+                className="p-2 text-[#FA5A1E] hover:text-[#E0480E] transition-colors"
+                aria-label="Subscribe to updates"
               >
-                Enter Workspace
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            ) : (
-              <>
-                <Link
-                  href="/sign-up"
-                  className="px-8 py-4 rounded-2xl bg-primary hover:opacity-90 text-primary-foreground font-bold transition-all duration-200 shadow-[var(--glass-shadow)] glow-orange"
-                >
-                  Start for Free
-                </Link>
-                <Link
-                  href="/sign-in"
-                  className="px-8 py-4 rounded-2xl glass text-foreground font-semibold transition-all duration-200"
-                >
-                  Sign In
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </section>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
 
-      {/* Footer */}
-      <footer className="glass border-t border-[var(--glass-border)] py-10 z-10">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <span className="font-extrabold tracking-tight text-foreground">
-              Quantix CD
-            </span>
-            <span>&copy; {new Date().getFullYear()} All Rights Reserved.</span>
-          </div>
-          <div className="flex items-center gap-6">
-            {["Privacy Policy", "Terms of Service", "Security Status"].map(
-              (label) => (
-                <a
-                  key={label}
-                  href="#"
-                  className="hover:text-primary transition-colors duration-200"
-                >
-                  {label}
-                </a>
-              ),
-            )}
+            {/* Social Icons */}
+            <div className="flex items-center gap-3 pt-2 text-stone-500 dark:text-stone-400">
+              <a
+                href="https://linkedin.com"
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-stone-900 dark:hover:text-white transition-colors text-xs font-semibold"
+                aria-label="LinkedIn"
+              >
+                in
+              </a>
+              <a
+                href="https://x.com"
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-stone-900 dark:hover:text-white transition-colors text-xs font-semibold"
+                aria-label="X (formerly Twitter)"
+              >
+                𝕏
+              </a>
+            </div>
           </div>
         </div>
-      </footer>
-    </>
+      </div>
+    </footer>
   );
 }

@@ -5,6 +5,8 @@ import { getWarehouseService } from "@/services/warehouse/warehouse.service";
 import { WarehouseForm } from "./warehouse-form";
 import { PageContainer } from "@/components/layout/page-container";
 
+import { CategorySubNav } from "@/components/navigation/category-sub-nav";
+
 export default async function WarehouseSettingsPage({
   params,
 }: {
@@ -19,12 +21,10 @@ export default async function WarehouseSettingsPage({
   const canEdit = canX(role, company, "warehouse:edit");
 
   return (
-    <PageContainer>
-      <WarehouseForm
-        companyId={companyId}
-        initialData={warehouse}
-        canEdit={canEdit}
-      />
-    </PageContainer>
+    <WarehouseForm
+      companyId={companyId}
+      initialData={warehouse}
+      canEdit={canEdit}
+    />
   );
 }
