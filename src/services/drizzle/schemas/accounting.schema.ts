@@ -97,7 +97,7 @@ export const journalEntry = pgTable(
 
     status: journalStatusEnum("status").notNull().default("posted"),
 
-    createdBy: uuid("created_by").notNull(),
+    createdBy: text("created_by").notNull(),
 
     ...timestamps(),
   },

@@ -4,8 +4,6 @@ import * as React from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ColumnDef } from "@tanstack/react-table";
-import { DataTable } from "@/components/data-table/data-table";
 import { MemberWithUser } from "@/dal/user/queries";
 import { canX } from "@/lib/permissions";
 import {
@@ -16,11 +14,15 @@ import {
 } from "@/lib/schemas/user";
 import { useUserManager } from "./hooks/use-user-manager";
 import { ImageUploadField } from "@/components/image-upload-field";
-import { Field, FieldLabel, FieldError, FieldGroup } from "@/components/ui/field";
+import {
+  Field,
+  FieldLabel,
+  FieldError,
+  FieldGroup,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/layout/page-header";
-import { SectionCard } from "@/components/layout/section-card";
+import { cn } from "@/lib/utils";
 import {
   UserPlus,
   Users,
@@ -30,8 +32,16 @@ import {
   Loader2,
   Send,
   Check,
+  Search,
+  ChevronDown,
+  ShieldCheck,
 } from "lucide-react";
 import { Invitation } from "@/services/drizzle/schemas";
+import {
+  SplitPanelShell,
+  ListRow,
+  EmptyState,
+} from "@/components/layout/split-panel-shell";
 
 interface UsersClientProps {
   companyId: string;
@@ -41,6 +51,219 @@ interface UsersClientProps {
   userRole: string;
 }
 
+function UserDetailPanel({
+  member,
+  companyId,
+  userRole,
+  isPending,
+  sheetRole,
+  setSheetRole,
+  sheetMessage,
+  confirmRemoveId,
+  setConfirmRemoveId,
+  handleRemoveMember,
+  profileForm,
+  handleProfileSubmit,
+  canUpdateRole,
+  canRemove,
+}: {
+  member: MemberWithUser | null;
+  companyId: string;
+  userRole: string;
+  isPending: boolean;
+  sheetRole: string;
+  setSheetRole: (role: string) => void;
+  sheetMessage: { type: "success" | "error"; text: string } | null;
+  confirmRemoveId: string | null;
+  setConfirmRemoveId: (id: string | null) => void;
+  handleRemoveMember: (id: string) => void;
+  profileForm: ReturnType<typeof useForm<UpdateUserProfileInput>>;
+  handleProfileSubmit: (
+    data: UpdateUserProfileInput,
+    canUpdateRole: boolean,
+  ) => void;
+  canUpdateRole: boolean;
+  canRemove: boolean;
+}) {
+  if (!member) {
+    return (
+      <EmptyState
+        icon={Users}
+        title="Select a team member"
+        description="Click any member on the left to inspect organization permissions and edit profile credentials."
+      />
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full justify-between gap-6 overflow-y-auto">
+      <div className="space-y-6">
+        {/* Top Header */}
+        <div className="flex items-start justify-between gap-4 pb-4 border-b border-primary/25">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-12 w-12 rounded-2xl bg-primary/25 border border-primary/30 flex items-center justify-center font-black text-foreground text-sm shrink-0 overflow-hidden">
+              {member.user.image ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={member.user.image}
+                  alt={member.user.name}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                member.user.name.slice(0, 2).toUpperCase()
+              )}
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-xl font-black text-foreground truncate">
+                {member.user.name}
+              </h2>
+              <p className="text-xs text-foreground/80 mt-0.5">
+                {member.user.email}
+              </p>
+            </div>
+          </div>
+
+          <span
+            className={cn(
+              "text-[10px] font-bold px-2.5 py-0.5 rounded-full border shrink-0 capitalize",
+              member.role === "owner"
+                ? "bg-purple-500/20 text-purple-600 dark:text-purple-300 border-purple-500/30"
+                : member.role === "admin"
+                  ? "bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 border-indigo-500/30"
+                  : "bg-primary/20 text-foreground border-primary/30",
+            )}
+          >
+            {member.role}
+          </span>
+        </div>
+
+        {/* Quick Parameters */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-2xl bg-primary/20 border border-primary/25 p-4">
+            <span className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider block">
+              Joined Organization
+            </span>
+            <p className="text-sm font-bold text-foreground mt-1">
+              {new Date(member.createdAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-primary/20 border border-primary/25 p-4">
+            <span className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider block">
+              Access Tier
+            </span>
+            <p className="text-sm font-bold text-foreground mt-1 capitalize">
+              {member.role} Level
+            </p>
+          </div>
+        </div>
+
+        {/* Edit Form */}
+        <div className="space-y-4">
+          {sheetMessage && (
+            <div
+              className={cn(
+                "p-3 rounded-2xl text-xs border",
+                sheetMessage.type === "success"
+                  ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
+                  : "bg-rose-500/20 text-rose-700 dark:text-rose-300 border-rose-500/30",
+              )}
+            >
+              {sheetMessage.text}
+            </div>
+          )}
+
+          <form
+            id="edit-member-form"
+            onSubmit={profileForm.handleSubmit((data) =>
+              handleProfileSubmit(data, canUpdateRole),
+            )}
+            className="space-y-3"
+          >
+            <div>
+              <label className="text-[10px] font-semibold text-foreground/80 block mb-1">
+                Display Name
+              </label>
+              <input
+                {...profileForm.register("name")}
+                className="w-full px-3 py-2 rounded-xl bg-background/80 border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+
+            <div>
+              <label className="text-[10px] font-semibold text-foreground/80 block mb-1">
+                Organization Role
+              </label>
+              <select
+                disabled={!canUpdateRole}
+                value={sheetRole}
+                onChange={(e) => setSheetRole(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-background/80 border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+              >
+                <option value="owner">Owner</option>
+                <option value="admin">Admin</option>
+                <option value="accountant">Accountant</option>
+                <option value="staff">Staff</option>
+              </select>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {/* Bottom Actions */}
+      <div className="pt-5 border-t border-primary/25 flex items-center justify-between gap-3">
+        {canRemove &&
+          (confirmRemoveId === member.id ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-rose-600 dark:text-rose-400 font-bold">
+                Remove user?
+              </span>
+              <button
+                type="button"
+                onClick={() => handleRemoveMember(member.id)}
+                disabled={isPending}
+                className="px-4 py-2 rounded-full bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition-colors flex items-center gap-1.5"
+              >
+                {isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                <span>Confirm</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmRemoveId(null)}
+                className="px-3 py-2 rounded-full bg-primary/20 text-foreground text-xs font-semibold hover:bg-primary/30"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmRemoveId(member.id)}
+              className="h-10 px-4 rounded-full border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-300 text-xs font-semibold hover:bg-rose-500/20 transition-colors flex items-center gap-1.5"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              <span>Remove User</span>
+            </button>
+          ))}
+
+        <button
+          form="edit-member-form"
+          type="submit"
+          disabled={isPending}
+          className="h-10 px-6 rounded-full bg-primary text-primary-foreground text-xs font-extrabold hover:bg-primary/90 transition-all shadow-lg flex items-center gap-2 ml-auto"
+        >
+          {isPending && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
+          <span>Save Changes</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function UsersClient({
   companyId,
   members,
@@ -48,10 +271,6 @@ export function UsersClient({
   invitations,
   userRole,
 }: UsersClientProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
   const {
     activeTab,
     isInviteOpen,
@@ -65,10 +284,7 @@ export function UsersClient({
     sheetMessage,
     confirmRemoveId,
     setConfirmRemoveId,
-    resendingId,
-    resendSuccessId,
     openMemberSheet,
-    closeMemberSheet,
     handleInviteSubmit,
     handleProfileSubmit,
     handleRemoveMember,
@@ -80,7 +296,9 @@ export function UsersClient({
   const canUpdateRole = canX(userRole, { id: companyId }, "user:update-role");
   const canRemove = canX(userRole, { id: companyId }, "user:remove");
 
-  // Invite Form
+  const [search, setSearch] = React.useState("");
+  const [listFilter, setListFilter] = React.useState<string>("all");
+
   const inviteForm = useForm<InviteUserInput>({
     resolver: zodResolver(inviteUserSchema),
     defaultValues: {
@@ -89,7 +307,6 @@ export function UsersClient({
     },
   });
 
-  // Profile Form for Sheet
   const profileForm = useForm<UpdateUserProfileInput>({
     resolver: zodResolver(updateUserProfileSchema),
     defaultValues: {
@@ -99,7 +316,6 @@ export function UsersClient({
     },
   });
 
-  // Sync sheet form with selected member
   React.useEffect(() => {
     if (selectedMember) {
       profileForm.reset({
@@ -110,205 +326,199 @@ export function UsersClient({
     }
   }, [selectedMember, profileForm]);
 
-  const columns: ColumnDef<MemberWithUser>[] = [
-    {
-      accessorKey: "user.name",
-      header: "Member",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center font-bold text-primary text-xs">
-            {row.original.user.image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={row.original.user.image} alt={row.original.user.name} className="h-full w-full object-cover rounded-full" />
-            ) : (
-              row.original.user.name.substring(0, 2).toUpperCase()
-            )}
-          </div>
-          <div>
-            <div className="font-semibold text-foreground">{row.original.user.name}</div>
-            <div className="text-xs text-muted-foreground">{row.original.user.email}</div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "role",
-      header: "Role",
-      cell: ({ row }) => (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize bg-secondary text-secondary-foreground border border-border/40">
-          {row.original.role}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "createdAt",
-      header: "Joined Date",
-      cell: ({ row }) => (
-        <span className="text-xs text-muted-foreground">
-          {new Date(row.original.createdAt).toLocaleDateString()}
-        </span>
-      ),
-    },
-  ];
+  const filtered = members.filter((m) => {
+    const matches =
+      !search ||
+      m.user.name.toLowerCase().includes(search.toLowerCase()) ||
+      m.user.email.toLowerCase().includes(search.toLowerCase());
+    if (!matches) return false;
+    if (listFilter === "admin") return m.role === "admin" || m.role === "owner";
+    if (listFilter === "staff") return m.role === "staff";
+    return true;
+  });
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="User Management"
-        description="Manage company members, assign operational roles, and send invitations."
-        icon={Users}
-        actions={
-          canInvite ? (
-            <Button onClick={() => setIsInviteOpen(true)} className="flex items-center gap-2">
+    <>
+      <SplitPanelShell
+        title="Users & Team Access"
+        subtitle={`${totalMembers} active team members · access roles and membership`}
+        headerAction={
+          canInvite && (
+            <button
+              onClick={() => setIsInviteOpen(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-xs font-bold hover:opacity-90 transition-opacity shadow-xs"
+            >
               <UserPlus className="h-4 w-4" />
               <span>Invite Member</span>
-            </Button>
-          ) : undefined
+            </button>
+          )
+        }
+        filterToolbar={
+          <>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-foreground text-background font-bold text-xs shadow-xs">
+                <span>Active filters</span>
+                <span className="h-4 w-4 rounded-full bg-background text-foreground text-[10px] flex items-center justify-center font-bold">
+                  {search ? 1 : 0}
+                </span>
+              </span>
+
+              <button className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-border/80 bg-card text-foreground font-semibold hover:bg-muted transition-colors">
+                <span>All roles</span>
+                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search user or email..."
+                  className="pl-9 pr-4 h-9 text-xs rounded-full border border-border/80 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary w-48 sm:w-56"
+                />
+              </div>
+            </div>
+          </>
+        }
+        listTabs={
+          <>
+            <button
+              onClick={() => setListFilter("all")}
+              className={cn(
+                "px-4 py-1.5 rounded-full text-xs font-semibold transition-all",
+                listFilter === "all"
+                  ? "bg-primary text-primary-foreground font-bold shadow-sm"
+                  : "text-foreground/80 hover:text-foreground hover:bg-primary/20",
+              )}
+            >
+              All Members
+            </button>
+            <button
+              onClick={() => setListFilter("admin")}
+              className={cn(
+                "px-4 py-1.5 rounded-full text-xs font-semibold transition-all",
+                listFilter === "admin"
+                  ? "bg-primary text-primary-foreground font-bold shadow-sm"
+                  : "text-foreground/80 hover:text-foreground hover:bg-primary/20",
+              )}
+            >
+              Admins & Owners
+            </button>
+            <button
+              onClick={() => setListFilter("staff")}
+              className={cn(
+                "px-4 py-1.5 rounded-full text-xs font-semibold transition-all",
+                listFilter === "staff"
+                  ? "bg-primary text-primary-foreground font-bold shadow-sm"
+                  : "text-foreground/80 hover:text-foreground hover:bg-primary/20",
+              )}
+            >
+              Staff
+            </button>
+          </>
+        }
+        listTitle="Team Members"
+        listChildren={
+          filtered.length === 0 ? (
+            <EmptyState icon={Users} title="No team members found" />
+          ) : (
+            filtered.map((m) => (
+              <ListRow
+                key={m.id}
+                id={m.id}
+                primary={m.user.name}
+                secondary={m.user.email}
+                meta={new Date(m.createdAt).toLocaleDateString()}
+                selected={selectedMember?.id === m.id}
+                onClick={() => openMemberSheet(m)}
+                badge={
+                  <span
+                    className={cn(
+                      "text-[10px] font-bold px-2 py-0.5 rounded-full border capitalize",
+                      m.role === "owner"
+                        ? "bg-purple-500/20 text-purple-300 border-purple-500/30"
+                        : m.role === "admin"
+                          ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/30"
+                          : "bg-white/10 text-zinc-400 border-white/10",
+                    )}
+                  >
+                    {m.role}
+                  </span>
+                }
+              />
+            ))
+          )
+        }
+        detailChildren={
+          <UserDetailPanel
+            member={selectedMember}
+            companyId={companyId}
+            userRole={userRole}
+            isPending={isSheetPending}
+            sheetRole={sheetRole}
+            setSheetRole={setSheetRole}
+            sheetMessage={sheetMessage}
+            confirmRemoveId={confirmRemoveId}
+            setConfirmRemoveId={setConfirmRemoveId}
+            handleRemoveMember={handleRemoveMember}
+            profileForm={profileForm}
+            handleProfileSubmit={handleProfileSubmit}
+            canUpdateRole={canUpdateRole}
+            canRemove={canRemove}
+          />
         }
       />
 
-      {/* Header Toolbar */}
-      <div className="flex items-center gap-2 border-b border-border/40 pb-2">
-        <button
-          onClick={() => {
-            const params = new URLSearchParams(searchParams.toString());
-            params.set("tab", "members");
-            router.push(`${pathname}?${params.toString()}`);
-          }}
-          className={`px-4 py-2 text-sm font-medium rounded-xl transition-all ${
-            activeTab === "members"
-              ? "bg-primary text-primary-foreground shadow-xs"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
-          }`}
-        >
-          Active Members ({totalMembers})
-        </button>
-        <button
-          onClick={() => {
-            const params = new URLSearchParams(searchParams.toString());
-            params.set("tab", "invitations");
-            router.push(`${pathname}?${params.toString()}`);
-          }}
-          className={`px-4 py-2 text-sm font-medium rounded-xl transition-all ${
-            activeTab === "invitations"
-              ? "bg-primary text-primary-foreground shadow-xs"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
-          }`}
-        >
-          Pending Invitations ({invitations.length})
-        </button>
-      </div>
-
-      {/* Main Content View */}
-      {activeTab === "members" ? (
-        <DataTable
-          columns={columns}
-          data={members}
-          total={totalMembers}
-          onRowClick={openMemberSheet}
-          searchPlaceholder="Search members by name or email..."
-        />
-      ) : (
-        <SectionCard variant="solid">
-          {invitations.length === 0 ? (
-            <div className="py-12 text-center text-muted-foreground text-sm">
-              No pending invitations.
-            </div>
-          ) : (
-            <div className="divide-y divide-border/40">
-              {invitations.map((inv) => (
-                <div key={inv.id} className="py-3 px-2 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Mail className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <div className="text-sm font-medium text-foreground">{inv.email}</div>
-                      <div className="text-xs text-muted-foreground capitalize">
-                        Role: {inv.role} • Expires: {new Date(inv.expiresAt).toLocaleDateString()}
-                      </div>
-                    </div>
-                  </div>
-                  {canInvite && (
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleResendInvite(inv.id, inv.email, inv.role)}
-                        disabled={resendingId === inv.id}
-                        className="flex items-center gap-1.5 text-xs font-medium"
-                      >
-                        {resendingId === inv.id ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : resendSuccessId === inv.id ? (
-                          <Check className="h-3.5 w-3.5 text-emerald-500" />
-                        ) : (
-                          <Send className="h-3.5 w-3.5 text-primary" />
-                        )}
-                        <span>{resendSuccessId === inv.id ? "Sent!" : "Resend Email"}</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleRevokeInvite(inv.id)}
-                        disabled={isInvitePending}
-                        className="text-destructive border-destructive/20 hover:bg-destructive/10"
-                      >
-                        Revoke
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </SectionCard>
-      )}
-
-      {/* Invite Modal Dialog */}
+      {/* Invite Modal */}
       {isInviteOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-          <div className="w-full max-w-md glass-surface-elevated border border-border/80 rounded-3xl p-8 md:p-10 shadow-2xl space-y-6 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-border/40 pb-4">
-              <h3 className="text-2xl font-bold tracking-tight text-foreground">Invite Team Member</h3>
+          <div className="w-full max-w-md bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-border/40 pb-3">
+              <h3 className="text-xl font-bold text-foreground">
+                Invite Team Member
+              </h3>
               <button
                 onClick={() => setIsInviteOpen(false)}
-                className="p-2 rounded-xl hover:bg-muted text-muted-foreground transition-colors"
+                className="p-1 rounded-lg hover:bg-muted text-muted-foreground"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             {inviteError && (
-              <div className="p-4 rounded-xl text-xs bg-destructive/10 text-destructive border border-destructive/20 font-medium">
+              <div className="p-3 rounded-2xl text-xs bg-destructive/10 text-destructive border border-destructive/20 font-medium">
                 {inviteError}
               </div>
             )}
 
             <form
               onSubmit={inviteForm.handleSubmit((data) =>
-                handleInviteSubmit(data, () => inviteForm.reset())
+                handleInviteSubmit(data, () => inviteForm.reset()),
               )}
-              className="space-y-6"
+              className="space-y-4"
             >
               <FieldGroup>
                 <Field>
-                  <FieldLabel htmlFor="invite-email">User Email Address *</FieldLabel>
+                  <FieldLabel>Email Address *</FieldLabel>
                   <Input
-                    id="invite-email"
                     type="email"
                     {...inviteForm.register("email")}
                     placeholder="colleague@company.com"
                   />
                   {inviteForm.formState.errors.email && (
-                    <FieldError>{inviteForm.formState.errors.email.message}</FieldError>
+                    <FieldError>
+                      {inviteForm.formState.errors.email.message}
+                    </FieldError>
                   )}
                 </Field>
 
                 <Field>
-                  <FieldLabel htmlFor="invite-role">Assign Role *</FieldLabel>
+                  <FieldLabel>Assign Role *</FieldLabel>
                   <select
-                    id="invite-role"
                     {...inviteForm.register("role")}
-                    className="w-full h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="w-full px-3 py-2 rounded-xl border border-border/60 bg-background text-sm"
                   >
                     <option value="owner">Owner</option>
                     <option value="admin">Admin</option>
@@ -319,11 +529,17 @@ export function UsersClient({
               </FieldGroup>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-border/40">
-                <Button type="button" variant="outline" onClick={() => setIsInviteOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsInviteOpen(false)}
+                >
                   Cancel
                 </Button>
                 <Button type="submit" disabled={isInvitePending}>
-                  {isInvitePending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  {isInvitePending && (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  )}
                   Send Invitation
                 </Button>
               </div>
@@ -331,132 +547,6 @@ export function UsersClient({
           </div>
         </div>
       )}
-
-      {/* Member Details / Edit Sheet */}
-      {selectedMember && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-background/80 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-card border-l border-border/80 h-full p-6 shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-200 overflow-y-auto">
-            <div className="space-y-6">
-              <div className="flex items-center justify-between border-b border-border/40 pb-4">
-                <div>
-                  <h3 className="text-lg font-bold text-foreground">{selectedMember.user.name}</h3>
-                  <p className="text-xs text-muted-foreground">{selectedMember.user.email}</p>
-                </div>
-                <button
-                  onClick={closeMemberSheet}
-                  className="p-1 rounded-lg hover:bg-muted text-muted-foreground"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-
-              {sheetMessage && (
-                <div
-                  className={`p-3 rounded-lg text-xs border ${
-                    sheetMessage.type === "success"
-                      ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                      : "bg-destructive/10 text-destructive border-destructive/20"
-                  }`}
-                >
-                  {sheetMessage.text}
-                </div>
-              )}
-
-              <form
-                id="edit-member-form"
-                onSubmit={profileForm.handleSubmit((data) =>
-                  handleProfileSubmit(data, canUpdateRole)
-                )}
-                className="space-y-4"
-              >
-                <FieldGroup>
-                  <Field>
-                    <ImageUploadField
-                      label="User Avatar"
-                      value={profileForm.watch("imageUrl")}
-                      onChange={(url) => profileForm.setValue("imageUrl", url, { shouldValidate: true })}
-                    />
-                  </Field>
-
-                  <Field>
-                    <FieldLabel htmlFor="member-name">Name</FieldLabel>
-                    <Input
-                      id="member-name"
-                      {...profileForm.register("name")}
-                    />
-                    {profileForm.formState.errors.name && (
-                      <FieldError>{profileForm.formState.errors.name.message}</FieldError>
-                    )}
-                  </Field>
-
-                  <Field>
-                    <FieldLabel htmlFor="member-role">Organization Role</FieldLabel>
-                    <select
-                      id="member-role"
-                      disabled={!canUpdateRole}
-                      value={sheetRole}
-                      onChange={(e) => setSheetRole(e.target.value)}
-                      className="w-full h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
-                    >
-                      <option value="owner">Owner</option>
-                      <option value="admin">Admin</option>
-                      <option value="accountant">Accountant</option>
-                      <option value="staff">Staff</option>
-                    </select>
-                  </Field>
-                </FieldGroup>
-              </form>
-            </div>
-
-            <div className="pt-6 border-t border-border/40 flex items-center justify-between">
-              {canRemove ? (
-                confirmRemoveId === selectedMember.id ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-destructive font-medium">Confirm?</span>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleRemoveMember(selectedMember.id)}
-                      disabled={isSheetPending}
-                    >
-                      Yes, Remove
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setConfirmRemoveId(null)}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setConfirmRemoveId(selectedMember.id)}
-                    className="text-destructive border-destructive/20 hover:bg-destructive/10"
-                  >
-                    <Trash2 className="h-4 w-4 mr-1.5" />
-                    Remove Member
-                  </Button>
-                )
-              ) : (
-                <div />
-              )}
-
-              <div className="flex items-center gap-3">
-                <Button variant="outline" onClick={closeMemberSheet}>
-                  Close
-                </Button>
-                <Button form="edit-member-form" type="submit" disabled={isSheetPending}>
-                  {isSheetPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  Save Changes
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    </>
   );
 }

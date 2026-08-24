@@ -107,12 +107,12 @@ export async function createQuoteService(
         customerId: input.customerId,
         quoteNumber,
         quoteDate: input.quoteDate,
-        expiryDate: input.expiryDate ?? null,
+        expiryDate: input.expiryDate || null,
         status: "draft",
         subtotal: String(subtotal),
         taxTotal: String(taxTotal),
         total: String(total),
-        notes: input.notes ?? null,
+        notes: input.notes || null,
         createdBy: userId,
       });
 
@@ -129,9 +129,10 @@ export async function createQuoteService(
       });
     });
   } catch (cause) {
+    console.error("[createQuoteService] Database error:", cause);
     return Err({
       code: "DB_ERROR",
-      message: cause instanceof Error ? cause.message : "Failed to create quote",
+      message: "Failed to create sales quote. Please try again or contact support.",
     });
   }
 }
@@ -202,11 +203,11 @@ export async function updateQuoteService(
       await updateQuote(tx, companyId, quoteId, {
         customerId: input.customerId,
         quoteDate: input.quoteDate,
-        expiryDate: input.expiryDate ?? null,
+        expiryDate: input.expiryDate || null,
         subtotal: String(subtotal),
         taxTotal: String(taxTotal),
         total: String(total),
-        notes: input.notes ?? null,
+        notes: input.notes || null,
       });
 
       await deleteQuoteLines(tx, companyId, quoteId);
@@ -216,9 +217,10 @@ export async function updateQuoteService(
       return Ok(updated!);
     });
   } catch (cause) {
+    console.error("[updateQuoteService] Database error:", cause);
     return Err({
       code: "DB_ERROR",
-      message: cause instanceof Error ? cause.message : "Failed to update quote",
+      message: "Failed to update sales quote. Please try again or contact support.",
     });
   }
 }
@@ -245,9 +247,10 @@ export async function updateQuoteStatusService(
       return Ok(updated!);
     });
   } catch (cause) {
+    console.error("[updateQuoteStatusService] Database error:", cause);
     return Err({
       code: "DB_ERROR",
-      message: cause instanceof Error ? cause.message : "Failed to update quote status",
+      message: "Failed to update sales quote status. Please try again or contact support.",
     });
   }
 }
@@ -315,9 +318,10 @@ export async function convertQuoteToOrderService(
       return Ok(createdOrder);
     });
   } catch (cause) {
+    console.error("[convertQuoteToOrderService] Database error:", cause);
     return Err({
       code: "DB_ERROR",
-      message: cause instanceof Error ? cause.message : "Failed to convert quote to order",
+      message: "Failed to convert quote to order. Please try again or contact support.",
     });
   }
 }
@@ -337,9 +341,10 @@ export async function getQuoteListService(
     );
     return Ok(res);
   } catch (cause) {
+    console.error("[getQuoteListService] Database error:", cause);
     return Err({
       code: "DB_ERROR",
-      message: cause instanceof Error ? cause.message : "Failed to fetch quotes",
+      message: "Failed to fetch quotes. Please try again or contact support.",
     });
   }
 }
@@ -362,9 +367,10 @@ export async function getQuoteDetailService(
     }
     return Ok(res);
   } catch (cause) {
+    console.error("[getQuoteDetailService] Database error:", cause);
     return Err({
       code: "DB_ERROR",
-      message: cause instanceof Error ? cause.message : "Failed to fetch quote detail",
+      message: "Failed to fetch quote details. Please try again or contact support.",
     });
   }
 }

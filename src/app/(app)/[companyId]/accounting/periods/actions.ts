@@ -6,7 +6,31 @@ import { Err, type Result } from "@/lib/server-utils";
 import {
   closePeriodService,
   reopenPeriodService,
+  generateFiscalYearService,
 } from "@/services/accounting/period.service";
+
+export async function generateFiscalYearAction(
+  companyId: string,
+  year: number,
+): Promise<Result<any, { code: string; message: string }>> {
+  const ctx = await requireTenantContext();
+  if (!ctx.ok) {
+    return Err({ code: "FORBIDDEN", message: ctx.error.message });
+  }
+
+  const result = await generateFiscalYearService(
+    companyId,
+    year,
+    ctx.value.userId,
+    ctx.value.role,
+  );
+
+  if (result.ok) {
+    revalidatePath(`/${companyId}/accounting/periods`);
+  }
+
+  return result;
+}
 
 export async function closePeriodAction(
   companyId: string,

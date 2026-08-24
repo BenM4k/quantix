@@ -140,7 +140,7 @@ export const stockLedgerEntry = pgTable(
 
     sequenceNumber: bigint("sequence_number", { mode: "number" }).notNull(),
 
-    createdBy: uuid("created_by").notNull(),
+    createdBy: text("created_by").notNull(),
 
     ...timestamps(),
   },
@@ -223,7 +223,7 @@ export const stockAdjustment = pgTable(
 
     reason: text("reason").notNull(),
 
-    createdBy: uuid("created_by").notNull(),
+    createdBy: text("created_by").notNull(),
 
     ...timestamps(),
   },

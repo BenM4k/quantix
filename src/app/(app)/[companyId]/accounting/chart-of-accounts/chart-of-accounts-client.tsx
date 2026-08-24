@@ -3,10 +3,9 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ColumnDef } from "@tanstack/react-table";
-import { DataTable } from "@/components/data-table/data-table";
 import { LedgerAccount } from "@/services/drizzle/schemas";
 import { canX } from "@/lib/permissions";
+import { cn } from "@/lib/utils";
 import {
   createAccountSchema,
   updateAccountSchema,
@@ -14,10 +13,30 @@ import {
   type UpdateAccountInput,
 } from "@/lib/schemas/accounting";
 import { useAccountManager } from "./hooks/use-account-manager";
-import { Field, FieldLabel, FieldError, FieldGroup } from "@/components/ui/field";
+import {
+  Field,
+  FieldLabel,
+  FieldError,
+  FieldGroup,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Plus, X, Loader2, BookOpen, CheckCircle, AlertCircle } from "lucide-react";
+import {
+  Plus,
+  X,
+  Loader2,
+  BookOpen,
+  AlertCircle,
+  Search,
+  ChevronDown,
+  Landmark,
+  ShieldCheck,
+} from "lucide-react";
+import {
+  SplitPanelShell,
+  ListRow,
+  EmptyState,
+} from "@/components/layout/split-panel-shell";
 
 interface ChartOfAccountsClientProps {
   companyId: string;
@@ -25,6 +44,201 @@ interface ChartOfAccountsClientProps {
   totalAccounts: number;
   userRole: string;
   hasActivityMap: Record<string, boolean>;
+}
+
+function AccountDetailPanel({
+  account,
+  companyId,
+  userRole,
+  isLocked,
+  isPending,
+  editForm,
+  handleEditSubmit,
+  successMessage,
+  errorMessage,
+  canUpdate,
+}: {
+  account: LedgerAccount | null;
+  companyId: string;
+  userRole: string;
+  isLocked: boolean;
+  isPending: boolean;
+  editForm: ReturnType<typeof useForm<UpdateAccountInput>>;
+  handleEditSubmit: (data: UpdateAccountInput) => void;
+  successMessage: string | null;
+  errorMessage: string | null;
+  canUpdate: boolean;
+}) {
+  if (!account) {
+    return (
+      <EmptyState
+        icon={BookOpen}
+        title="Select an account"
+        description="Click any ledger account on the left to inspect normal balances and accounting rules."
+      />
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full justify-between gap-6 overflow-y-auto">
+      <div className="space-y-6">
+        {/* Top Header */}
+        <div className="flex items-start justify-between gap-4 pb-4 border-b border-white/10">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-12 w-12 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300 font-bold text-sm shrink-0">
+              {account.isBankAccount ? (
+                <Landmark className="h-5 w-5" />
+              ) : (
+                <BookOpen className="h-5 w-5" />
+              )}
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-xl font-black text-white truncate">
+                {account.name}
+              </h2>
+              <p className="text-xs text-indigo-300 font-mono mt-0.5">
+                Code: {account.code} · Normal:{" "}
+                {account.normalBalance.toUpperCase()}
+              </p>
+            </div>
+          </div>
+
+          <span
+            className={cn(
+              "text-[10px] font-bold px-2.5 py-0.5 rounded-full border shrink-0",
+              account.isActive
+                ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                : "bg-white/10 text-zinc-400 border-white/10",
+            )}
+          >
+            {account.isActive ? "Active Account" : "Inactive"}
+          </span>
+        </div>
+
+        {/* Metric Cards Breakdown */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="rounded-2xl bg-primary/20 border border-primary/25 p-4">
+            <span className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider block">
+              Accounting Type
+            </span>
+            <p className="text-lg font-black text-foreground mt-1 capitalize font-mono">
+              {account.type}
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-primary/20 border border-primary/25 p-4">
+            <span className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider block">
+              Normal Balance Rule
+            </span>
+            <p className="text-lg font-black text-foreground mt-1 capitalize font-mono">
+              {account.normalBalance}
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-primary/20 border border-primary/25 p-4">
+            <span className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider block">
+              Classification
+            </span>
+            <p className="text-lg font-black text-foreground mt-1 font-mono">
+              {account.isBankAccount ? "Bank Depository" : "General Ledger"}
+            </p>
+          </div>
+        </div>
+
+        {isLocked && (
+          <div className="p-3.5 rounded-2xl bg-amber-500/20 border border-amber-400/30 text-amber-800 dark:text-amber-200 text-xs flex items-start gap-2.5">
+            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-300" />
+            <span>
+              This account contains posted transactions. Core debit/credit rules
+              are locked to enforce statutory ledger integrity.
+            </span>
+          </div>
+        )}
+
+        {/* Edit Form */}
+        {canUpdate && (
+          <div className="space-y-4">
+            {errorMessage && (
+              <div className="p-3 rounded-2xl text-xs bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/30">
+                {errorMessage}
+              </div>
+            )}
+            {successMessage && (
+              <div className="p-3 rounded-2xl text-xs bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                {successMessage}
+              </div>
+            )}
+            <form
+              id="edit-acc-form"
+              onSubmit={editForm.handleSubmit(handleEditSubmit)}
+              className="space-y-3"
+            >
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <label className="text-[10px] font-semibold text-foreground/80 block mb-1">
+                    Account Code *
+                  </label>
+                  <input
+                    {...editForm.register("code")}
+                    className="w-full px-3 py-2 rounded-xl bg-background/80 border border-border text-foreground font-mono text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-semibold text-foreground/80 block mb-1">
+                    Account Name *
+                  </label>
+                  <input
+                    {...editForm.register("name")}
+                    className="w-full px-3 py-2 rounded-xl bg-background/80 border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-6 pt-2 text-xs">
+                <label className="flex items-center gap-2 font-medium text-foreground cursor-pointer">
+                  <input
+                    type="checkbox"
+                    {...editForm.register("isBankAccount")}
+                    className="rounded-md border-border bg-background/80 accent-primary h-4 w-4"
+                  />
+                  <span>Is Bank Account</span>
+                </label>
+
+                <label className="flex items-center gap-2 font-medium text-foreground cursor-pointer">
+                  <input
+                    type="checkbox"
+                    {...editForm.register("isActive")}
+                    className="rounded-md border-border bg-background/80 accent-primary h-4 w-4"
+                  />
+                  <span>Active in Chart</span>
+                </label>
+              </div>
+            </form>
+          </div>
+        )}
+      </div>
+
+      {/* Bottom Actions */}
+      <div className="pt-5 border-t border-primary/25 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5 text-xs text-foreground/70">
+          <ShieldCheck className="h-4 w-4 text-foreground/80" />
+          <span>Double-entry compliant</span>
+        </div>
+
+        {canUpdate && (
+          <button
+            form="edit-acc-form"
+            type="submit"
+            disabled={isPending}
+            className="h-10 px-6 rounded-full bg-primary text-primary-foreground text-xs font-extrabold hover:bg-primary/90 transition-all shadow-lg flex items-center gap-2"
+          >
+            {isPending && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
+            <span>Save Account</span>
+          </button>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export function ChartOfAccountsClient({
@@ -43,7 +257,6 @@ export function ChartOfAccountsClient({
     isPending,
     openCreateDialog,
     openAccountSheet,
-    closeAccountSheet,
     handleCreateSubmit,
     handleEditSubmit,
   } = useAccountManager(companyId, accounts);
@@ -51,7 +264,9 @@ export function ChartOfAccountsClient({
   const canCreate = canX(userRole, { id: companyId }, "account:create");
   const canUpdate = canX(userRole, { id: companyId }, "account:edit");
 
-  // Create Form
+  const [search, setSearch] = React.useState("");
+  const [activeTab, setActiveTab] = React.useState<string>("all");
+
   const createForm = useForm<CreateAccountInput>({
     resolver: zodResolver(createAccountSchema),
     defaultValues: {
@@ -65,17 +280,6 @@ export function ChartOfAccountsClient({
     },
   });
 
-  // Automatically update normalBalance when type changes in Create Form
-  const watchedType = createForm.watch("type");
-  React.useEffect(() => {
-    if (watchedType === "asset" || watchedType === "expense") {
-      createForm.setValue("normalBalance", "debit");
-    } else if (watchedType === "liability" || watchedType === "equity" || watchedType === "revenue") {
-      createForm.setValue("normalBalance", "credit");
-    }
-  }, [watchedType, createForm]);
-
-  // Edit Form
   const editForm = useForm<UpdateAccountInput>({
     resolver: zodResolver(updateAccountSchema),
     defaultValues: {
@@ -89,7 +293,6 @@ export function ChartOfAccountsClient({
     },
   });
 
-  // Sync sheet form with selected account
   React.useEffect(() => {
     if (selectedAccount) {
       editForm.reset({
@@ -104,139 +307,230 @@ export function ChartOfAccountsClient({
     }
   }, [selectedAccount, editForm]);
 
-  const isSelectedAccountLocked = selectedAccount ? !!hasActivityMap[selectedAccount.id] : false;
+  const filtered = accounts.filter((a) => {
+    const matches =
+      !search ||
+      a.name.toLowerCase().includes(search.toLowerCase()) ||
+      a.code.toLowerCase().includes(search.toLowerCase());
+    if (!matches) return false;
+    if (activeTab === "asset") return a.type === "asset";
+    if (activeTab === "liability") return a.type === "liability";
+    if (activeTab === "revenue") return a.type === "revenue";
+    if (activeTab === "expense") return a.type === "expense";
+    return true;
+  });
 
-  const columns: ColumnDef<LedgerAccount>[] = [
-    {
-      accessorKey: "code",
-      header: "Code",
-      cell: ({ row }) => <span className="font-mono text-xs font-bold text-foreground">{row.original.code}</span>,
-    },
-    {
-      accessorKey: "name",
-      header: "Account Name",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-foreground">{row.original.name}</span>
-          {row.original.isBankAccount && (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-500 border border-blue-500/20">
-              Bank
-            </span>
-          )}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "type",
-      header: "Type",
-      cell: ({ row }) => (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize bg-secondary text-secondary-foreground border border-border/40">
-          {row.original.type}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "normalBalance",
-      header: "Normal Balance",
-      cell: ({ row }) => (
-        <span className="text-xs font-mono capitalize text-muted-foreground">
-          {row.original.normalBalance}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "isActive",
-      header: "Status",
-      cell: ({ row }) => (
-        <span
-          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-            row.original.isActive
-              ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-              : "bg-muted text-muted-foreground border-border/40"
-          }`}
-        >
-          {row.original.isActive ? <CheckCircle className="h-3 w-3" /> : null}
-          {row.original.isActive ? "Active" : "Inactive"}
-        </span>
-      ),
-    },
-  ];
+  const isSelectedAccountLocked = selectedAccount
+    ? !!hasActivityMap[selectedAccount.id]
+    : false;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div />
-        {canCreate && (
-          <Button onClick={openCreateDialog} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            <span>Create Account</span>
-          </Button>
-        )}
-      </div>
+    <>
+      <SplitPanelShell
+        title="Chart of Accounts"
+        subtitle={`${totalAccounts} total ledger accounts · debit/credit balance definitions`}
+        headerAction={
+          canCreate && (
+            <button
+              onClick={openCreateDialog}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-xs font-bold hover:opacity-90 transition-opacity shadow-xs"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Create Account</span>
+            </button>
+          )
+        }
+        filterToolbar={
+          <>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-foreground text-background font-bold text-xs shadow-xs">
+                <span>Active filters</span>
+                <span className="h-4 w-4 rounded-full bg-background text-foreground text-[10px] flex items-center justify-center font-bold">
+                  {search ? 1 : 0}
+                </span>
+              </span>
 
-      <DataTable
-        columns={columns}
-        data={accounts}
-        total={totalAccounts}
-        onRowClick={openAccountSheet}
-        searchPlaceholder="Search accounts by code or name..."
-      />
-
-      {/* Create Dialog */}
-      {isCreateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-          <div className="w-full max-w-lg bg-card border border-border/80 rounded-2xl p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-border/40 pb-3">
-              <h3 className="text-lg font-bold text-foreground">Create Ledger Account</h3>
-              <button
-                onClick={() => setIsCreateOpen(false)}
-                className="p-1 rounded-lg hover:bg-muted text-muted-foreground"
-              >
-                <X className="h-4 w-4" />
+              <button className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-border/80 bg-card text-foreground font-semibold hover:bg-muted transition-colors">
+                <span>All classifications</span>
+                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
               </button>
             </div>
 
-            {errorMessage && (
-              <div className="p-3 rounded-lg text-xs bg-destructive/10 text-destructive border border-destructive/20">
-                {errorMessage}
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search code or name..."
+                  className="pl-9 pr-4 h-9 text-xs rounded-full border border-border/80 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary w-48 sm:w-56"
+                />
               </div>
-            )}
+            </div>
+          </>
+        }
+        listTabs={
+          <>
+            <button
+              onClick={() => setActiveTab("all")}
+              className={cn(
+                "px-4 py-1.5 rounded-full text-xs font-semibold transition-all",
+                activeTab === "all"
+                  ? "bg-primary text-primary-foreground font-bold shadow-sm"
+                  : "text-foreground/80 hover:text-foreground hover:bg-primary/20",
+              )}
+            >
+              All Accounts
+            </button>
+            <button
+              onClick={() => setActiveTab("asset")}
+              className={cn(
+                "px-4 py-1.5 rounded-full text-xs font-semibold transition-all",
+                activeTab === "asset"
+                  ? "bg-primary text-primary-foreground font-bold shadow-sm"
+                  : "text-foreground/80 hover:text-foreground hover:bg-primary/20",
+              )}
+            >
+              Assets
+            </button>
+            <button
+              onClick={() => setActiveTab("liability")}
+              className={cn(
+                "px-4 py-1.5 rounded-full text-xs font-semibold transition-all",
+                activeTab === "liability"
+                  ? "bg-primary text-primary-foreground font-bold shadow-sm"
+                  : "text-foreground/80 hover:text-foreground hover:bg-primary/20",
+              )}
+            >
+              Liabilities
+            </button>
+            <button
+              onClick={() => setActiveTab("revenue")}
+              className={cn(
+                "px-4 py-1.5 rounded-full text-xs font-semibold transition-all",
+                activeTab === "revenue"
+                  ? "bg-primary text-primary-foreground font-bold shadow-sm"
+                  : "text-foreground/80 hover:text-foreground hover:bg-primary/20",
+              )}
+            >
+              Revenue
+            </button>
+            <button
+              onClick={() => setActiveTab("expense")}
+              className={cn(
+                "px-4 py-1.5 rounded-full text-xs font-semibold transition-all",
+                activeTab === "expense"
+                  ? "bg-primary text-primary-foreground font-bold shadow-sm"
+                  : "text-foreground/80 hover:text-foreground hover:bg-primary/20",
+              )}
+            >
+              Expenses
+            </button>
+          </>
+        }
+        listTitle="General Ledger Accounts"
+        listChildren={
+          filtered.length === 0 ? (
+            <EmptyState icon={BookOpen} title="No accounts found" />
+          ) : (
+            filtered.map((acc) => (
+              <ListRow
+                key={acc.id}
+                id={acc.id}
+                primary={acc.name}
+                secondary={`Code: ${acc.code}`}
+                meta={`Normal: ${acc.normalBalance.toUpperCase()}`}
+                amount={acc.isBankAccount ? "Bank" : undefined}
+                selected={selectedAccount?.id === acc.id}
+                onClick={() => openAccountSheet(acc)}
+                badge={
+                  <span
+                    className={cn(
+                      "text-[10px] font-bold px-2 py-0.5 rounded-full border capitalize",
+                      acc.type === "asset"
+                        ? "bg-blue-500/20 text-blue-300 border-blue-500/30"
+                        : acc.type === "liability"
+                          ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                          : acc.type === "revenue"
+                            ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                            : "bg-purple-500/20 text-purple-300 border-purple-500/30",
+                    )}
+                  >
+                    {acc.type}
+                  </span>
+                }
+              />
+            ))
+          )
+        }
+        detailChildren={
+          <AccountDetailPanel
+            account={selectedAccount}
+            companyId={companyId}
+            userRole={userRole}
+            isLocked={isSelectedAccountLocked}
+            isPending={isPending}
+            editForm={editForm}
+            handleEditSubmit={handleEditSubmit}
+            successMessage={successMessage}
+            errorMessage={errorMessage}
+            canUpdate={canUpdate}
+          />
+        }
+      />
 
-            <form onSubmit={createForm.handleSubmit(handleCreateSubmit)} className="space-y-4">
+      {/* Create Account Modal */}
+      {isCreateOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+          <div className="w-full max-w-lg bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-border/40 pb-4">
+              <h3 className="text-xl font-bold text-foreground">
+                Create Ledger Account
+              </h3>
+              <button
+                onClick={() => setIsCreateOpen(false)}
+                className="p-2 rounded-xl hover:bg-muted text-muted-foreground"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form
+              onSubmit={createForm.handleSubmit(handleCreateSubmit)}
+              className="space-y-4"
+            >
               <FieldGroup>
                 <div className="grid grid-cols-2 gap-4">
                   <Field>
-                    <FieldLabel htmlFor="create-code">Account Code *</FieldLabel>
+                    <FieldLabel>Account Code *</FieldLabel>
                     <Input
-                      id="create-code"
                       {...createForm.register("code")}
-                      placeholder="1010"
+                      placeholder="e.g. 1010"
                     />
                     {createForm.formState.errors.code && (
-                      <FieldError>{createForm.formState.errors.code.message}</FieldError>
+                      <FieldError>
+                        {createForm.formState.errors.code.message}
+                      </FieldError>
                     )}
                   </Field>
-
                   <Field>
-                    <FieldLabel htmlFor="create-name">Account Name *</FieldLabel>
+                    <FieldLabel>Account Name *</FieldLabel>
                     <Input
-                      id="create-name"
                       {...createForm.register("name")}
-                      placeholder="Main Operating Cash"
+                      placeholder="e.g. Operating Bank"
                     />
                     {createForm.formState.errors.name && (
-                      <FieldError>{createForm.formState.errors.name.message}</FieldError>
+                      <FieldError>
+                        {createForm.formState.errors.name.message}
+                      </FieldError>
                     )}
                   </Field>
                 </div>
-
                 <div className="grid grid-cols-2 gap-4">
                   <Field>
-                    <FieldLabel htmlFor="create-acc-type">Account Type *</FieldLabel>
+                    <FieldLabel>Account Type *</FieldLabel>
                     <select
-                      id="create-acc-type"
                       {...createForm.register("type")}
-                      className="w-full h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                      className="w-full px-3 py-2 rounded-xl border border-border/60 bg-background text-sm"
                     >
                       <option value="asset">Asset</option>
                       <option value="liability">Liability</option>
@@ -245,47 +539,46 @@ export function ChartOfAccountsClient({
                       <option value="expense">Expense</option>
                     </select>
                   </Field>
-
                   <Field>
-                    <FieldLabel htmlFor="create-normal">Normal Balance *</FieldLabel>
-                    <select
-                      id="create-normal"
-                      {...createForm.register("normalBalance")}
-                      className="w-full h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs focus:outline-none focus:ring-1 focus:ring-ring"
-                    >
-                      <option value="debit">Debit</option>
-                      <option value="credit">Credit</option>
-                    </select>
+                    <FieldLabel>Normal Balance</FieldLabel>
+                    <Input
+                      disabled
+                      value={createForm.watch("normalBalance")}
+                      className="capitalize"
+                    />
                   </Field>
                 </div>
-
                 <div className="flex items-center gap-6 pt-2">
-                  <label className="flex items-center gap-2 text-xs font-medium text-foreground cursor-pointer">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-foreground cursor-pointer">
                     <input
                       type="checkbox"
                       {...createForm.register("isBankAccount")}
-                      className="rounded border-input text-primary focus:ring-primary h-4 w-4"
+                      className="rounded-md border-border accent-primary h-4 w-4"
                     />
                     <span>Is Bank Account</span>
                   </label>
-
-                  <label className="flex items-center gap-2 text-xs font-medium text-foreground cursor-pointer">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-foreground cursor-pointer">
                     <input
                       type="checkbox"
                       {...createForm.register("isActive")}
-                      className="rounded border-input text-primary focus:ring-primary h-4 w-4"
+                      className="rounded-md border-border accent-primary h-4 w-4"
                     />
                     <span>Active Account</span>
                   </label>
                 </div>
               </FieldGroup>
-
               <div className="flex justify-end gap-3 pt-4 border-t border-border/40">
-                <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsCreateOpen(false)}
+                >
                   Cancel
                 </Button>
                 <Button type="submit" disabled={isPending}>
-                  {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  {isPending && (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  )}
                   Save Account
                 </Button>
               </div>
@@ -293,144 +586,6 @@ export function ChartOfAccountsClient({
           </div>
         </div>
       )}
-
-      {/* Edit / Details Sheet */}
-      {selectedAccount && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-background/80 backdrop-blur-sm">
-          <div className="w-full max-w-lg bg-card border-l border-border/80 h-full p-6 shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-200 overflow-y-auto">
-            <div className="space-y-6">
-              <div className="flex items-center justify-between border-b border-border/40 pb-4">
-                <div>
-                  <h3 className="text-lg font-bold text-foreground">{selectedAccount.name}</h3>
-                  <p className="text-xs text-muted-foreground font-mono">Code: {selectedAccount.code}</p>
-                </div>
-                <button
-                  onClick={closeAccountSheet}
-                  className="p-1 rounded-lg hover:bg-muted text-muted-foreground"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-
-              {isSelectedAccountLocked && (
-                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs flex items-start gap-2">
-                  <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-                  <span>
-                    This account has posted journal entries. Account Type and Normal Balance are locked to preserve double-entry accounting integrity.
-                  </span>
-                </div>
-              )}
-
-              {errorMessage && (
-                <div className="p-3 rounded-lg text-xs bg-destructive/10 text-destructive border border-destructive/20">
-                  {errorMessage}
-                </div>
-              )}
-
-              {successMessage && (
-                <div className="p-3 rounded-lg text-xs bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                  {successMessage}
-                </div>
-              )}
-
-              <form id="edit-account-form" onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-4">
-                <FieldGroup>
-                  <div className="grid grid-cols-2 gap-4">
-                    <Field>
-                      <FieldLabel htmlFor="edit-code">Code</FieldLabel>
-                      <Input
-                        id="edit-code"
-                        disabled={!canUpdate}
-                        {...editForm.register("code")}
-                      />
-                      {editForm.formState.errors.code && (
-                        <FieldError>{editForm.formState.errors.code.message}</FieldError>
-                      )}
-                    </Field>
-
-                    <Field>
-                      <FieldLabel htmlFor="edit-name">Account Name</FieldLabel>
-                      <Input
-                        id="edit-name"
-                        disabled={!canUpdate}
-                        {...editForm.register("name")}
-                      />
-                      {editForm.formState.errors.name && (
-                        <FieldError>{editForm.formState.errors.name.message}</FieldError>
-                      )}
-                    </Field>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <Field>
-                      <FieldLabel htmlFor="edit-type">Type</FieldLabel>
-                      <select
-                        id="edit-type"
-                        disabled={!canUpdate || isSelectedAccountLocked}
-                        {...editForm.register("type")}
-                        className="w-full h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
-                      >
-                        <option value="asset">Asset</option>
-                        <option value="liability">Liability</option>
-                        <option value="equity">Equity</option>
-                        <option value="revenue">Revenue</option>
-                        <option value="expense">Expense</option>
-                      </select>
-                    </Field>
-
-                    <Field>
-                      <FieldLabel htmlFor="edit-normal">Normal Balance</FieldLabel>
-                      <select
-                        id="edit-normal"
-                        disabled={!canUpdate || isSelectedAccountLocked}
-                        {...editForm.register("normalBalance")}
-                        className="w-full h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
-                      >
-                        <option value="debit">Debit</option>
-                        <option value="credit">Credit</option>
-                      </select>
-                    </Field>
-                  </div>
-
-                  <div className="flex items-center gap-6 pt-2">
-                    <label className="flex items-center gap-2 text-xs font-medium text-foreground cursor-pointer">
-                      <input
-                        type="checkbox"
-                        disabled={!canUpdate}
-                        {...editForm.register("isBankAccount")}
-                        className="rounded border-input text-primary focus:ring-primary h-4 w-4"
-                      />
-                      <span>Is Bank Account</span>
-                    </label>
-
-                    <label className="flex items-center gap-2 text-xs font-medium text-foreground cursor-pointer">
-                      <input
-                        type="checkbox"
-                        disabled={!canUpdate}
-                        {...editForm.register("isActive")}
-                        className="rounded border-input text-primary focus:ring-primary h-4 w-4"
-                      />
-                      <span>Active Account</span>
-                    </label>
-                  </div>
-                </FieldGroup>
-              </form>
-            </div>
-
-            <div className="pt-6 border-t border-border/40 flex items-center justify-end gap-3">
-              <Button variant="outline" onClick={closeAccountSheet}>
-                Close
-              </Button>
-              {canUpdate && (
-                <Button form="edit-account-form" type="submit" disabled={isPending}>
-                  {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  Save Changes
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    </>
   );
 }

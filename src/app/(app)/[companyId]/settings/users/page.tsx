@@ -4,6 +4,8 @@ import { getMembersService, getPendingInvitationsService } from "@/services/user
 import { UsersClient } from "./users-client";
 import { PageContainer } from "@/components/layout/page-container";
 
+import { CategorySubNav } from "@/components/navigation/category-sub-nav";
+
 export default async function UserManagementPage({
   params,
   searchParams,
@@ -35,14 +37,12 @@ export default async function UserManagementPage({
   const invitations = invitationsRes.ok ? invitationsRes.value : [];
 
   return (
-    <PageContainer>
-      <UsersClient
-        companyId={companyId}
-        members={members}
-        totalMembers={totalMembers}
-        invitations={invitations}
-        userRole={role}
-      />
-    </PageContainer>
+    <UsersClient
+      companyId={companyId}
+      members={members}
+      totalMembers={totalMembers}
+      invitations={invitations}
+      userRole={role}
+    />
   );
 }

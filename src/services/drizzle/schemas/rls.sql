@@ -44,7 +44,7 @@ ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION current_organization_id()
-RETURNS uuid
+RETURNS text
 LANGUAGE sql
 STABLE
 AS $$
@@ -54,7 +54,7 @@ AS $$
             true
         ),
         ''
-    )::uuid;
+    );
 $$;
 
 

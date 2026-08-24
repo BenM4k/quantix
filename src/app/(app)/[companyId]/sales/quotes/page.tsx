@@ -2,6 +2,8 @@ import { requireTenantContext } from "@/lib/require-tenant-context";
 import { getQuoteListService } from "@/services/sales/quote.service";
 import { QuotesClient } from "./quotes-client";
 
+import { CategorySubNav } from "@/components/navigation/category-sub-nav";
+
 interface PageProps {
   params: Promise<{ companyId: string }>;
   searchParams: Promise<{

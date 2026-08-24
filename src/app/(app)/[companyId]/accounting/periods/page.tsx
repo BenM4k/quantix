@@ -3,6 +3,8 @@ import { withTenantTransaction } from "@/lib/tenant-context";
 import { getFiscalPeriodsList } from "@/dal/fiscal-period/queries";
 import { PeriodsClient } from "./periods-client";
 
+import { CategorySubNav } from "@/components/navigation/category-sub-nav";
+
 interface PageProps {
   params: Promise<{ companyId: string }>;
 }

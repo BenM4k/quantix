@@ -1,30 +1,10 @@
-import { requireTenantContext } from "@/lib/require-tenant-context";
-import { PageContainer } from "@/components/layout/page-container";
-import { PageHeader } from "@/components/layout/page-header";
-import { SectionCard } from "@/components/layout/section-card";
-import { Package } from "lucide-react";
+import { redirect } from "next/navigation";
 
-interface PageProps {
+export default async function LegacyStockValuationRedirect({
+  params,
+}: {
   params: Promise<{ companyId: string }>;
-}
-
-export default async function StockValuationReportPage({ params }: PageProps) {
+}) {
   const { companyId } = await params;
-  const ctx = await requireTenantContext();
-  if (!ctx.ok) throw new Error(ctx.error.message);
-
-  return (
-    <PageContainer>
-      <PageHeader
-        title="Stock Valuation Report"
-        description="Live inventory valuation based on current quantity on hand and weighted average cost."
-        icon={Package}
-      />
-
-      <SectionCard variant="solid" className="max-w-sm">
-        <span className="text-xs text-muted-foreground font-semibold uppercase">Total Live Stock Value</span>
-        <p className="text-3xl font-bold text-purple-500 mt-1">$0.00</p>
-      </SectionCard>
-    </PageContainer>
-  );
+  redirect(`/${companyId}/reports/stock-valuation`);
 }

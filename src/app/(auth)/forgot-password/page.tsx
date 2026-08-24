@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Loader2, MailCheck } from "lucide-react";
 
 const inputClass =
-  "w-full px-0 py-2.5 bg-transparent border-0 border-b border-[var(--glass-border)] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary transition-colors duration-200 text-sm disabled:opacity-40";
+  "w-full px-0 py-2.5 bg-transparent border-0 border-b border-[var(--glass-border)] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary transition-colors duration-200 text-base disabled:opacity-40";
 
 const labelClass = "text-xs font-medium text-muted-foreground uppercase tracking-wider";
 

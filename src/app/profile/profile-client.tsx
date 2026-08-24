@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { setActiveCompanyAction } from "./actions";
+import { signOutAction } from "@/app/api/auth/[...all]/actions/auth.actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +16,7 @@ import {
   ShieldCheck,
   Mail,
   Home,
+  LogOut,
 } from "lucide-react";
 
 interface OrganizationItem {
@@ -43,6 +45,7 @@ export function ProfileClient({
 }: ProfileClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
+  const [isLoggingOut, startLogoutTransition] = React.useTransition();
   const [activeId, setActiveId] = React.useState<string | null>(activeOrgId || null);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -59,6 +62,17 @@ export function ProfileClient({
     });
   };
 
+  const handleLogout = () => {
+    setError(null);
+    startLogoutTransition(async () => {
+      const res = await signOutAction();
+      if (res.ok) {
+        router.push("/sign-in");
+        router.refresh();
+      }
+    });
+  };
+
   return (
     <div className="space-y-8 max-w-4xl mx-auto py-8 px-4">
       {/* Top Header Navigation */}
@@ -71,6 +85,21 @@ export function ProfileClient({
         >
           <Home className="h-4 w-4" />
           <span>Home Page</span>
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={isLoggingOut}
+          onClick={handleLogout}
+          className="flex items-center gap-2 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive transition-colors"
+        >
+          {isLoggingOut ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <LogOut className="h-4 w-4" />
+          )}
+          <span>{isLoggingOut ? "Signing Out..." : "Sign Out"}</span>
         </Button>
       </div>
 
