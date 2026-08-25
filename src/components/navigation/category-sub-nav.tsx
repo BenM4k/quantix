@@ -29,7 +29,7 @@ export function CategorySubNav({ items, className }: CategorySubNavProps) {
 
   return (
     <div className={cn("overflow-x-auto no-scrollbar py-1", className)}>
-      <nav className="inline-flex items-center gap-1 bg-primary/30 text-foreground p-1.5 rounded-full shadow-sm border border-primary/25 backdrop-blur-md">
+      <nav className="inline-flex items-center gap-1 sm:gap-1.5">
         {items.map((item) => {
           const isActive = item.href === bestMatchHref;
 
@@ -38,20 +38,20 @@ export function CategorySubNav({ items, className }: CategorySubNavProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "inline-flex items-center gap-2 px-4 py-1.5 text-xs font-medium rounded-full transition-all duration-150 shrink-0",
+                "inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md transition-colors shrink-0",
                 isActive
-                  ? "bg-primary text-primary-foreground font-bold shadow-sm"
-                  : "text-foreground/80 hover:text-foreground hover:bg-primary/20",
+                  ? "text-primary font-semibold"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
               )}
             >
               <span>{item.label}</span>
               {item.badge !== undefined && (
                 <span
                   className={cn(
-                    "px-1.5 py-0.5 rounded-full text-[10px] font-bold tabular-nums",
+                    "px-1.5 py-0.5 rounded-full text-[10px] tabular-nums",
                     isActive
-                      ? "bg-primary-foreground text-primary font-black"
-                      : "bg-primary/20 text-foreground/80",
+                      ? "bg-primary/10 text-primary font-bold"
+                      : "bg-muted text-muted-foreground",
                   )}
                 >
                   {item.badge}

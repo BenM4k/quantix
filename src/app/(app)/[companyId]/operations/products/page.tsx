@@ -3,7 +3,7 @@ import { getAuthContext } from "@/lib/auth-context";
 import { getProductsService } from "@/services/inventory/product.service";
 import { withTenantTransaction } from "@/lib/tenant-context";
 import { getBatchProductStockSummaries } from "@/dal/stock/queries";
-import { ProductsClient } from "../../inventory/products/products-client";
+import { ProductsOperationsClient } from "./components/products-operations-client";
 
 export default async function ProductMasterPage({
   params,
@@ -62,7 +62,7 @@ export default async function ProductMasterPage({
   }
 
   return (
-    <ProductsClient
+    <ProductsOperationsClient
       companyId={companyId}
       products={products}
       totalProducts={totalProducts}
