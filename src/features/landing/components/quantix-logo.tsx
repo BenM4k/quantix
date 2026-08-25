@@ -24,7 +24,7 @@ export function QuantixLogo({
       className={`inline-flex items-center gap-2.5 group transition-opacity hover:opacity-90 ${className}`}
     >
       <div
-        className={`${sizeMap[iconSize]} rounded-lg bg-[#FA5A1E] flex items-center justify-center text-white font-bold shadow-sm shadow-orange-500/20 relative overflow-hidden shrink-0`}
+        className={`${sizeMap[iconSize]} rounded-lg bg-primary flex items-center justify-center text-white font-bold shadow-sm shadow-primary/20 relative overflow-hidden shrink-0`}
       >
         <svg
           viewBox="0 0 24 24"
